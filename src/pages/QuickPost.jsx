@@ -10,6 +10,7 @@ export default function QuickPost() {
   const [pw, setPw] = useState('');
   const [loginError, setLoginError] = useState(false);
   const [breeds, setBreeds] = useState([]);
+  const [copied, setCopied] = useState(false);
   const [files, setFiles] = useState([]);
   const [posting, setPosting] = useState(false);
   const [success, setSuccess] = useState(null);
@@ -97,7 +98,6 @@ export default function QuickPost() {
   }
 
   if (success) {
-    const [copied, setCopied] = useState(false);
     const copyCaption = () => {
       navigator.clipboard.writeText(success.caption);
       setCopied(true);
