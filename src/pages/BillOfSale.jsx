@@ -68,7 +68,6 @@ export default function BillOfSale() {
   const [buyerSig, setBuyerSig] = useState(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
-  const [sellerEmail, setSellerEmail] = useState('');
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const set = (k, v) => setBuyer(prev => ({ ...prev, [k]: v }));
 
@@ -140,8 +139,8 @@ export default function BillOfSale() {
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
       <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
       <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Bill of Sale Complete!</h1>
-      <p className="font-body text-charcoal-400 mb-1">Emailed to: <strong>Raegon@cashmerecottontailfarm.com</strong></p>
-      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Buyer copy to: <strong>{buyer.email}</strong></p>}
+      <p className="font-body text-charcoal-400 mb-1">Bill of sale has been sent!</p>
+      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Buyer copy emailed to: <strong>{buyer.email}</strong></p>}
       <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold. Print window also opened.</p>
       <a href="/admin" className="bg-sage-500 text-white font-semibold px-6 py-3 rounded-full">Back to Admin</a>
     </div></>
@@ -205,8 +204,6 @@ export default function BillOfSale() {
             </div>
             <input placeholder="Phone" value={buyer.phone} onChange={e => set('phone', e.target.value)} type="tel" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
           </div>
-
-          <p className="text-[10px] text-charcoal-300 mb-5">Seller copy will be emailed to Raegon@cashmerecottontailfarm.com</p>
 
           <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Buyer Signature</h2>
           <div className="mb-6">
