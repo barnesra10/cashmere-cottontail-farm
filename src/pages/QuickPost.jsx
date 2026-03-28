@@ -72,6 +72,7 @@ export default function QuickPost() {
           price: form.price,
           description: form.description,
         }));
+        sessionStorage.setItem('ccf_admin_key', pw);
         // Navigate to social preview
         window.location.href = '/social';
       } else {

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Facebook, Instagram, Edit3, Send, Clock, X, Copy, CheckCircle, Loader } from 'lucide-react';
-import { getAdminKey } from '../lib/adminApi';
 import SEO from '../components/SEO';
 
 const EDGE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/social-preview';
+
+function getAdminKeyFromSession() {
+  return sessionStorage.getItem('ccf_admin_key') || '';
+}
 
 // TikTok icon since lucide doesn't have one
 function TikTokIcon({ className }) {
@@ -74,7 +77,7 @@ export default function SocialPreview() {
     try {
       const res = await fetch(EDGE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKeyFromSession() },
         body: JSON.stringify({
           animal_name: data.animal?.name || data.name,
           breed: data.breedName || data.breed,
@@ -102,7 +105,7 @@ export default function SocialPreview() {
     try {
       const res = await fetch(EDGE_URL, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKeyFromSession() },
         body: JSON.stringify({
           platform,
           caption: captions[platform],
