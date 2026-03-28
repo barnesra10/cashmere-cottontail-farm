@@ -249,6 +249,7 @@ export default function Admin() {
     const cachedKey = getSavedSession();
     if (cachedKey) {
       setAdminKey(cachedKey);
+      sessionStorage.setItem('ccf_admin_key', cachedKey);
       getBreeds().then(b => {
         setBreeds(b);
         setAuthed(true);
