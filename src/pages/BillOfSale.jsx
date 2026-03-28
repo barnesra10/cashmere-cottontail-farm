@@ -102,39 +102,129 @@ export default function BillOfSale() {
     const price = selectedAnimal.price ? Number(selectedAnimal.price) : 0;
     const billHtml = buildBillHtml(selectedAnimal, buyer, price, today, buyerSig);
 
-    // Generate PDF in a hidden iframe
+    // Generate lightweight PDF using jsPDF text methods
     let pdfBase64 = '';
     try {
       const { default: jsPDF } = await import('jspdf');
-      const { default: html2canvas } = await import('html2canvas');
+      const doc = new jsPDF('p', 'mm', 'letter');
+      const w = doc.internal.pageSize.getWidth();
+      let y = 15;
+      const lm = 20; // left margin
+      const rm = w - 20; // right margin
+      const cw = rm - lm; // content width
 
-      // Create temporary hidden div with the bill HTML
-      const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;background:white;padding:24px';
-      container.innerHTML = billHtml.replace(/<!DOCTYPE.*?<body>/s, '').replace(/<\/body>.*$/s, '');
-      document.body.appendChild(container);
+      // Header
+      doc.setFont('times', 'bold'); doc.setFontSize(18);
+      doc.text('LIVESTOCK BILL OF SALE', w / 2, y, { align: 'center' }); y += 7;
+      doc.setFont('times', 'normal'); doc.setFontSize(10);
+      doc.text('State of Arkansas', w / 2, y, { align: 'center' }); y += 5;
+      doc.setLineWidth(0.5); doc.line(lm, y, rm, y); y += 5;
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('Cashmere Cottontail Farm, LLC \u2014 Winslow, Arkansas', w / 2, y, { align: 'center' }); y += 3;
+      doc.setLineWidth(0.2); doc.line(lm, y, rm, y); y += 8;
 
-      // Wait for fonts/images to load
-      await new Promise(r => setTimeout(r, 500));
+      // Seller
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('SELLER', lm, y); y += 5;
+      doc.setLineWidth(0.1); doc.line(lm, y, rm, y); y += 5;
+      doc.setFont('times', 'normal'); doc.setFontSize(10);
+      const sellerLines = [
+        ['Business:', 'Cashmere Cottontail Farm, LLC'],
+        ['Representative:', 'Raegon Barnes'],
+        ['Address:', '17799 Bethlehem Rd, Winslow, AR 72762'],
+        ['Phone:', '(479) 531-0849'],
+      ];
+      sellerLines.forEach(([l, v]) => { doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5; });
+      y += 3;
 
-      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      document.body.removeChild(container);
+      // Buyer
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('BUYER', lm, y); y += 5;
+      doc.line(lm, y, rm, y); y += 5;
+      doc.setFont('times', 'normal'); doc.setFontSize(10);
+      const buyerAddr = [buyer.address, buyer.city, buyer.state, buyer.zip].filter(Boolean).join(', ');
+      const buyerLines = [
+        ['Name:', buyer.name],
+        ['Address:', buyerAddr || 'N/A'],
+        ['Phone:', buyer.phone || 'N/A'],
+        ['Email:', buyer.email || 'N/A'],
+      ];
+      buyerLines.forEach(([l, v]) => { doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5; });
+      y += 3;
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'letter');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      // Animal
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('ANIMAL DESCRIPTION', lm, y); y += 5;
+      doc.line(lm, y, rm, y); y += 5;
+      doc.setFontSize(10);
+      const animalLines = [
+        ['Name:', selectedAnimal.name],
+        ['Description:', selectedAnimal.description || 'N/A'],
+        ['Sex:', selectedAnimal.sex],
+        ['Date of Birth:', selectedAnimal.date_of_birth || 'N/A'],
+        ['Registration #:', selectedAnimal.registration || 'N/A'],
+        ['Sire:', selectedAnimal.sire_name || 'N/A'],
+        ['Dam:', selectedAnimal.dam_name || 'N/A'],
+      ];
+      animalLines.forEach(([l, v]) => {
+        doc.setFont('times', 'bold'); doc.text(l, lm, y);
+        doc.setFont('times', 'normal');
+        const lines = doc.splitTextToSize(String(v), cw - 35);
+        doc.text(lines, lm + 32, y); y += lines.length * 4.5;
+      });
+      y += 3;
 
-      // Handle multi-page if content is tall
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let yOffset = 0;
-      while (yOffset < pdfHeight) {
-        if (yOffset > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfWidth, pdfHeight);
-        yOffset += pageHeight;
-      }
+      // Transaction
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('TRANSACTION', lm, y); y += 5;
+      doc.line(lm, y, rm, y); y += 5;
+      doc.setFontSize(10);
+      [['Sale Date:', today], ['Sale Price:', '$' + price.toLocaleString() + '.00'], ['Payment:', 'Paid in full at time of sale']].forEach(([l, v]) => {
+        doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5;
+      });
+      y += 3;
 
-      pdfBase64 = pdf.output('datauristring').split(',')[1];
+      // Terms
+      doc.setFont('times', 'bold'); doc.setFontSize(11);
+      doc.text('TERMS & CONDITIONS', lm, y); y += 5;
+      doc.line(lm, y, rm, y); y += 5;
+      doc.setFont('times', 'normal'); doc.setFontSize(8.5);
+      const terms = [
+        '1. Transfer of Ownership. Seller hereby transfers to Buyer all right, title, and interest in the above-described animal.',
+        '2. AS-IS Sale. The animal is sold "AS-IS" without warranties regarding health, condition, or fitness for any purpose.',
+        '3. Health. Seller represents that the animal is in good health at the time of sale. Buyer should have the animal examined by a veterinarian within 72 hours.',
+        '4. Assumption of Risk. Upon transfer, Buyer assumes all responsibility for the animal.',
+        '5. All Sales Final. No refunds or exchanges.',
+        '6. Governing Law. This Bill of Sale is governed by the laws of the State of Arkansas.',
+        '7. Entire Agreement. This document constitutes the entire agreement between the parties.',
+      ];
+      terms.forEach(t => { const lines = doc.splitTextToSize(t, cw); doc.text(lines, lm, y); y += lines.length * 3.5 + 1; });
+      y += 5;
+
+      // Signatures
+      if (y > 230) { doc.addPage(); y = 20; }
+      doc.setFont('times', 'bold'); doc.setFontSize(10);
+      doc.text('Seller:', lm, y);
+      doc.setFont('times', 'italic'); doc.setFontSize(18);
+      doc.text('Raegon Barnes', lm, y + 8);
+      doc.setFont('times', 'normal'); doc.setFontSize(8);
+      doc.text('Cashmere Cottontail Farm, LLC', lm, y + 14);
+      doc.text('Date: ' + today, lm, y + 18);
+
+      // Buyer signature image
+      doc.text('Buyer:', w / 2 + 5, y);
+      try { doc.addImage(buyerSig, 'PNG', w / 2 + 5, y + 1, 50, 15); } catch (e) {}
+      doc.setFontSize(8);
+      doc.text(buyer.name, w / 2 + 5, y + 18);
+      doc.text('Date: ' + today, w / 2 + 5, y + 22);
+      y += 28;
+
+      // Footer
+      doc.setLineWidth(0.1); doc.line(lm, y, rm, y); y += 4;
+      doc.setFontSize(7); doc.setFont('times', 'normal');
+      doc.text('Cashmere Cottontail Farm, LLC \u00b7 17799 Bethlehem Rd \u00b7 Winslow, AR 72762 \u00b7 (479) 531-0849 \u00b7 cashmerecottontailfarm.com', w / 2, y, { align: 'center' });
+
+      pdfBase64 = doc.output('datauristring').split(',')[1];
     } catch (e) {
       console.error('PDF generation error:', e);
     }
