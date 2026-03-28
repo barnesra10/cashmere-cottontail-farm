@@ -126,9 +126,9 @@ export default function Layout() {
             <div>
               <img src="/logo.jpeg" alt="Cashmere Cottontail Farm" className="h-16 w-auto rounded-md mb-4 brightness-110" />
               <p className="font-body text-sm text-cream-300 leading-relaxed max-w-xs">
-                Breeding luxury & boutique miniature animals. Every animal born to a purpose.
+                Breeding luxury & boutique miniature animals in Winslow, Arkansas. Every animal born to a purpose.
               </p>
-              <p className="font-body text-xs text-cream-300/60 mt-2">Established 2025</p>
+              <p className="font-body text-xs text-cream-300/60 mt-2">Winslow, AR · Established 2025</p>
             </div>
             <div>
               <h4 className="font-display text-lg mb-4 text-cream-100">Our Animals</h4>

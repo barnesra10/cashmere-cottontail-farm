@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <>
       <SEO
-        description="Cashmere Cottontail Farm breeds luxury Valais Blacknose sheep, Pygmy goats, Mini Rex rabbits, Miniature Dachshunds, and Silkie chickens. Find your dream boutique animal."
+        description="Cashmere Cottontail Farm in Winslow, Arkansas breeds luxury Valais Blacknose sheep, Pygmy goats, Mini Rex rabbits, Miniature Dachshunds, and Silkie chickens. Find your dream boutique animal."
         path="/"
       />
 

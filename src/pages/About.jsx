@@ -7,7 +7,7 @@ export default function About() {
     <>
       <SEO
         title="Our Farm"
-        description="Learn about Cashmere Cottontail Farm — our mission, our values, and our commitment to breeding luxury and boutique miniature animals with purpose."
+        description="Learn about Cashmere Cottontail Farm in Winslow, Arkansas — our mission, our values, and our commitment to breeding luxury and boutique miniature animals with purpose."
         path="/about"
       />
 

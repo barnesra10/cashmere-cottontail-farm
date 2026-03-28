@@ -19,7 +19,7 @@ export default function Contact() {
 
   return (
     <>
-      <SEO title="Contact Us" description="Get in touch with Cashmere Cottontail Farm." path="/contact" />
+      <SEO title="Contact Us" description="Get in touch with Cashmere Cottontail Farm in Winslow, Arkansas." path="/contact" />
       <section className="bg-charcoal-700 plaid-bg text-white">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
           <h1 className="font-display text-3xl md:text-4xl font-bold">Get In <span className="font-script text-wheat-400 font-normal">Touch</span></h1>
