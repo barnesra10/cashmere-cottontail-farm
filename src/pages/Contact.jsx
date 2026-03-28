@@ -93,8 +93,8 @@ export default function Contact() {
                 <div className="flex items-start gap-3">
                   <Mail className="w-5 h-5 text-sage-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-body text-sm font-semibold text-charcoal-600">Email</p>
-                    <p className="font-body text-xs text-charcoal-400">info@cashmerecottontailfarm.com</p>
+                    <p className="font-body text-sm font-semibold text-charcoal-600">Text Us</p>
+                    <a href="sms:4795310849" className="font-body text-xs text-sage-600 font-medium">(479) 531-0849 — Tap to text</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, MessageCircle } from 'lucide-react';
+import { Menu, X, ChevronDown, MessageCircle, MessageSquare } from 'lucide-react';
 import ChatWidget from './ChatWidget';
 import { useBreeds } from '../hooks/useData';
 
@@ -145,7 +145,8 @@ export default function Layout() {
             <div>
               <h4 className="font-display text-lg mb-4 text-cream-100">Connect</h4>
               <ul className="space-y-2 font-body text-sm text-cream-300">
-                <li><Link to="/contact" className="hover:text-wheat-300 transition-colors">Contact Us</Link></li>
+                <li><a href="sms:4795310849" className="hover:text-wheat-300 transition-colors">Text Us: (479) 531-0849</a></li>
+                <li><Link to="/contact" className="hover:text-wheat-300 transition-colors">Contact Form</Link></li>
                 <li><a href="https://facebook.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Facebook</a></li>
                 <li><a href="https://instagram.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Instagram</a></li>
                 <li><a href="https://tiktok.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">TikTok</a></li>
@@ -158,18 +159,25 @@ export default function Layout() {
         </div>
       </footer>
 
-      {/* Chat Widget */}
-      <div className="chat-bubble">
+      {/* Floating buttons */}
+      <div className="fixed bottom-6 right-4 z-50 flex flex-col items-end gap-3">
         {chatOpen ? (
           <ChatWidget onClose={() => setChatOpen(false)} />
         ) : (
-          <button
-            onClick={() => setChatOpen(true)}
-            className="bg-sage-500 hover:bg-sage-600 text-white rounded-full p-4 shadow-xl hover:shadow-2xl transition-all group"
-            aria-label="Chat with us"
-          >
-            <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
-          </button>
+          <>
+            {/* Text Us button */}
+            <a href="sms:4795310849"
+              className="flex items-center gap-2 bg-charcoal-700 hover:bg-charcoal-800 text-white rounded-full pl-4 pr-5 py-3 shadow-xl hover:shadow-2xl transition-all group">
+              <MessageSquare className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="font-body text-sm font-semibold">Text Us</span>
+            </a>
+            {/* AI Chat button */}
+            <button onClick={() => setChatOpen(true)}
+              className="bg-sage-500 hover:bg-sage-600 text-white rounded-full p-4 shadow-xl hover:shadow-2xl transition-all group"
+              aria-label="Chat with AI">
+              <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </button>
+          </>
         )}
       </div>
     </div>

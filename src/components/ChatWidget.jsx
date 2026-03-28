@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Bot, Phone, Mail } from 'lucide-react';
+import { X, Send, Bot, Phone, MessageSquare } from 'lucide-react';
 
 const SYSTEM_PROMPT = `You are the friendly AI assistant for Cashmere Cottontail Farm. You help visitors learn about the farm and its animals.
 
@@ -14,7 +14,7 @@ The farm also grows organic produce sold to clients.
 
 Mission: Provide any family with the luxury or boutique animal of their dreams — show quality or the best companion. Every animal born to a purpose.
 
-Be warm, knowledgeable, and helpful. If you don't know something specific (like pricing or current availability), encourage the visitor to contact the farm directly. Keep responses concise (2-3 sentences usually). If someone wants to talk to a human, provide directions to the contact page.`;
+Be warm, knowledgeable, and helpful. If you don't know something specific (like pricing or current availability), encourage the visitor to text us at (479) 531-0849 for the fastest response. Keep responses concise (2-3 sentences usually).`;
 
 export default function ChatWidget({ onClose }) {
   const [messages, setMessages] = useState([
@@ -22,7 +22,6 @@ export default function ChatWidget({ onClose }) {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [wantsHuman, setWantsHuman] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -38,15 +37,9 @@ export default function ChatWidget({ onClose }) {
     setLoading(true);
 
     try {
-      // Build conversation for API (skip the initial greeting which is static)
       const apiMessages = newMessages
-        .filter((_, i) => i > 0) // skip the static greeting
+        .filter((_, i) => i > 0)
         .map(m => ({ role: m.role, content: m.content }));
-
-      // If only one message (the user's first), add it properly
-      if (apiMessages.length === 1) {
-        // just the user message
-      }
 
       const response = await fetch('https://ccf-chat-proxy.ccf-farm.workers.dev', {
         method: 'POST',
@@ -58,12 +51,12 @@ export default function ChatWidget({ onClose }) {
       });
 
       const data = await response.json();
-      const reply = data.content?.map(b => b.text || '').join('') || "I'm having trouble connecting right now. Please try the contact page to reach us directly!";
+      const reply = data.content?.map(b => b.text || '').join('') || "I'm having trouble connecting right now. Text us at (479) 531-0849 — we'd love to help!";
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (err) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "I'm having a little trouble right now. You can reach us directly through our contact page — we'd love to hear from you!"
+        content: "I'm having a little trouble right now. Text us at (479) 531-0849 for the fastest response!"
       }]);
     }
     setLoading(false);
@@ -77,15 +70,21 @@ export default function ChatWidget({ onClose }) {
           <p className="font-display text-sm font-semibold">Cashmere Cottontail Farm</p>
           <p className="text-xs opacity-80">Ask us anything!</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setWantsHuman(true)} className="text-white/70 hover:text-white p-1" title="Talk to a human">
-            <Phone className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-1">
+          <a href="sms:4795310849" className="text-white/70 hover:text-white p-1.5 bg-white/10 rounded-full" title="Text us">
+            <MessageSquare className="w-4 h-4" />
+          </a>
           <button onClick={onClose} className="text-white/70 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
       </div>
+
+      {/* Text Us Banner */}
+      <a href="sms:4795310849" className="flex items-center gap-2 px-4 py-2 bg-wheat-100 border-b border-wheat-200 hover:bg-wheat-200 transition-colors">
+        <Phone className="w-4 h-4 text-sage-600" />
+        <span className="text-xs font-semibold text-charcoal-600">Prefer a real person? <span className="text-sage-600">Text us at (479) 531-0849</span></span>
+      </a>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-cream-50">
@@ -119,35 +118,18 @@ export default function ChatWidget({ onClose }) {
             </div>
           </div>
         )}
-
-        {/* Human contact option */}
-        {wantsHuman && (
-          <div className="bg-wheat-100 border border-wheat-300 rounded-xl p-3 text-sm">
-            <p className="font-semibold text-charcoal-600 mb-2">Reach us directly:</p>
-            <a href="/contact" className="flex items-center gap-2 text-sage-600 hover:text-sage-700 font-medium">
-              <Mail className="w-4 h-4" /> Visit our Contact page
-            </a>
-          </div>
-        )}
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
       <div className="px-3 py-2 border-t border-cream-200 bg-white flex-shrink-0">
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
+          <input type="text" value={input} onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && sendMessage()}
             placeholder="Type a message..."
-            className="flex-1 text-sm bg-cream-50 border border-cream-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-300 text-charcoal-600 placeholder:text-charcoal-200"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!input.trim() || loading}
-            className="bg-sage-500 hover:bg-sage-600 disabled:opacity-40 text-white rounded-full p-2 transition-colors"
-          >
+            className="flex-1 text-sm bg-cream-50 border border-cream-200 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sage-300 text-charcoal-600 placeholder:text-charcoal-200" />
+          <button onClick={sendMessage} disabled={!input.trim() || loading}
+            className="bg-sage-500 hover:bg-sage-600 disabled:opacity-40 text-white rounded-full p-2 transition-colors">
             <Send className="w-4 h-4" />
           </button>
         </div>
