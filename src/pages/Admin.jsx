@@ -73,31 +73,45 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
           </div>
         ))}
 
-        {/* Photo upload button */}
-        <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+        {/* Camera photo button */}
+        <label className={`w-16 h-16 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
           {uploading ? (
-            <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
           ) : (
             <>
-              <Camera className="w-5 h-5 text-cream-400" />
-              <span className="text-[8px] text-cream-400 mt-0.5">Photo</span>
+              <Camera className="w-4 h-4 text-cream-400" />
+              <span className="text-[7px] text-cream-400 mt-0.5">Camera</span>
             </>
           )}
           <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploading}
             onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
         </label>
 
-        {/* Video upload button */}
-        <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+        {/* Camera video button */}
+        <label className={`w-16 h-16 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
           {uploading ? (
-            <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
           ) : (
             <>
-              <Video className="w-5 h-5 text-cream-400" />
-              <span className="text-[8px] text-cream-400 mt-0.5">Video</span>
+              <Video className="w-4 h-4 text-cream-400" />
+              <span className="text-[7px] text-cream-400 mt-0.5">Video</span>
             </>
           )}
           <input type="file" accept="video/*" capture="environment" className="hidden" disabled={uploading}
+            onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
+        </label>
+
+        {/* Choose from library button — NO capture attribute so it opens gallery */}
+        <label className={`w-16 h-16 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+          {uploading ? (
+            <div className="w-4 h-4 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+          ) : (
+            <>
+              <Image className="w-4 h-4 text-cream-400" />
+              <span className="text-[7px] text-cream-400 mt-0.5">Library</span>
+            </>
+          )}
+          <input type="file" accept="image/*,video/*" className="hidden" disabled={uploading}
             onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
         </label>
       </div>
