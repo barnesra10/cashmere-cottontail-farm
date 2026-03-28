@@ -48,12 +48,10 @@ export default function ChatWidget({ onClose }) {
         // just the user message
       }
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('https://ccf-chat-proxy.ccf-farm.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 300,
           system: SYSTEM_PROMPT,
           messages: apiMessages.length > 0 ? apiMessages : [{ role: 'user', content: input.trim() }]
         })
