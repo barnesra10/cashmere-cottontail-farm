@@ -1,33 +1,24 @@
 import { useState, useEffect } from 'react';
-import { setAdminKey, getAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadPhoto, deletePhoto, setPrimaryPhoto, getContacts, markContactRead } from '../lib/adminApi';
-import { Lock, Plus, Camera, Trash2, Save, LogOut, Image, Eye } from 'lucide-react';
+import { setAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead } from '../lib/adminApi';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
   const [pw, setPw] = useState('');
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const tryLogin = async () => {
-    setLoading(true);
-    setAdminKey(pw);
-    try {
-      await getBreeds(); // test the key
-      onLogin();
-    } catch {
-      setError(true);
-      clearAdminKey();
-    }
+    setLoading(true); setAdminKey(pw);
+    try { await getBreeds(); onLogin(); }
+    catch { setError(true); clearAdminKey(); }
     setLoading(false);
   };
-
   return (
     <div className="max-w-sm mx-auto px-4 py-24 text-center">
       <Lock className="w-12 h-12 text-sage-500 mx-auto mb-4" />
       <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-6">Farm Admin</h1>
       <input type="password" value={pw} onChange={e => { setPw(e.target.value); setError(false); }}
-        onKeyDown={e => e.key === 'Enter' && tryLogin()}
-        placeholder="Enter admin password"
+        onKeyDown={e => e.key === 'Enter' && tryLogin()} placeholder="Enter admin password"
         className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-charcoal-600 font-body text-center focus:outline-none focus:ring-2 focus:ring-sage-300" />
       {error && <p className="text-red-500 text-sm mt-2">Wrong password</p>}
       <button onClick={tryLogin} disabled={loading}
@@ -38,35 +29,79 @@ function LoginScreen({ onLogin }) {
   );
 }
 
-function PhotoUploader({ animalId, existingPhotos = [], onUpdate }) {
+function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
 
   const handleUpload = async (file) => {
     setUploading(true);
+    const isVideo = file.type.startsWith('video/');
+    setProgress(isVideo ? 'Uploading video...' : 'Uploading photo...');
     try {
-      await uploadPhoto(animalId, file, existingPhotos.length === 0);
+      await uploadMedia(animalId, file, existingMedia.length === 0);
       onUpdate();
     } catch (err) { alert('Upload failed: ' + err.message); }
     setUploading(false);
+    setProgress('');
   };
 
+  const photos = existingMedia.filter(m => m.media_type === 'photo');
+  const videos = existingMedia.filter(m => m.media_type === 'video');
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {existingPhotos.map(p => (
-        <div key={p.id} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-cream-200 group">
-          <img src={p.url} alt="" className="w-full h-full object-cover" />
-          {p.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
-            <button onClick={() => setPrimaryPhoto(p.id, animalId).then(onUpdate)} className="text-white p-1"><Eye className="w-3 h-3" /></button>
-            <button onClick={() => deletePhoto(p.id).then(onUpdate)} className="text-red-300 p-1"><Trash2 className="w-3 h-3" /></button>
+    <div className="space-y-2">
+      {/* Media grid */}
+      <div className="flex flex-wrap gap-2">
+        {existingMedia.map(m => (
+          <div key={m.id} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-cream-200 group">
+            {m.media_type === 'video' ? (
+              <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
+                <Play className="w-6 h-6 text-white/80" />
+              </div>
+            ) : (
+              <img src={m.url} alt="" className="w-full h-full object-cover" />
+            )}
+            {m.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
+            {m.media_type === 'video' && <span className="absolute bottom-0.5 left-0.5 bg-charcoal-700 text-white text-[8px] px-1 rounded">Video</span>}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
+              {m.media_type === 'photo' && (
+                <button onClick={() => setPrimaryMedia(m.id, animalId).then(onUpdate)} className="text-white p-1"><Eye className="w-3 h-3" /></button>
+              )}
+              <button onClick={() => deleteMedia(m.id).then(onUpdate)} className="text-red-300 p-1"><Trash2 className="w-3 h-3" /></button>
+            </div>
           </div>
-        </div>
-      ))}
-      <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
-        {uploading ? <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" /> : <Camera className="w-6 h-6 text-cream-400" />}
-        <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploading}
-          onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
-      </label>
+        ))}
+
+        {/* Photo upload button */}
+        <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+          {uploading ? (
+            <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+          ) : (
+            <>
+              <Camera className="w-5 h-5 text-cream-400" />
+              <span className="text-[8px] text-cream-400 mt-0.5">Photo</span>
+            </>
+          )}
+          <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploading}
+            onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
+        </label>
+
+        {/* Video upload button */}
+        <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex flex-col items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+          {uploading ? (
+            <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+          ) : (
+            <>
+              <Video className="w-5 h-5 text-cream-400" />
+              <span className="text-[8px] text-cream-400 mt-0.5">Video</span>
+            </>
+          )}
+          <input type="file" accept="video/*" capture="environment" className="hidden" disabled={uploading}
+            onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
+        </label>
+      </div>
+      {progress && <p className="text-xs text-charcoal-300">{progress}</p>}
+      <p className="text-[10px] text-charcoal-200">{photos.length} photo{photos.length !== 1 ? 's' : ''}, {videos.length} video{videos.length !== 1 ? 's' : ''}</p>
     </div>
   );
 }
@@ -79,9 +114,8 @@ function AnimalForm({ breeds, animal, onSave, onCancel }) {
     sire_name: animal.sire_name || '', dam_name: animal.dam_name || '',
     price: animal.price || '', status: animal.status, featured: animal.featured
   } : {
-    breed_id: '', name: '', sex: 'female', role: 'available',
-    registration: '', show_quality: false, description: '',
-    date_of_birth: '', sire_name: '', dam_name: '',
+    breed_id: '', name: '', sex: 'female', role: 'available', registration: '',
+    show_quality: false, description: '', date_of_birth: '', sire_name: '', dam_name: '',
     price: '', status: 'available', featured: false
   });
   const [saving, setSaving] = useState(false);
@@ -92,8 +126,8 @@ function AnimalForm({ breeds, animal, onSave, onCancel }) {
     setSaving(true);
     const payload = { ...form, price: form.price ? Number(form.price) : null };
     try {
-      if (animal?.id) { await updateAnimal(animal.id, payload); }
-      else { await createAnimal(payload); }
+      if (animal?.id) await updateAnimal(animal.id, payload);
+      else await createAnimal(payload);
       onSave();
     } catch (err) { alert('Save failed: ' + err.message); }
     setSaving(false);
@@ -175,10 +209,10 @@ function AnimalForm({ breeds, animal, onSave, onCancel }) {
       </div>
       <div className="flex gap-3">
         <button onClick={handleSave} disabled={saving}
-          className="flex-1 bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2">
+          className="flex-1 bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-full flex items-center justify-center gap-2">
           <Save className="w-4 h-4" /> {saving ? 'Saving...' : animal?.id ? 'Update' : 'Add Animal'}
         </button>
-        <button onClick={onCancel} className="px-6 py-2.5 border border-cream-300 rounded-full text-charcoal-400 hover:bg-cream-50 transition-colors">Cancel</button>
+        <button onClick={onCancel} className="px-6 py-2.5 border border-cream-300 rounded-full text-charcoal-400 hover:bg-cream-50">Cancel</button>
       </div>
     </div>
   );
@@ -197,15 +231,12 @@ export default function Admin() {
 
   const loadData = async () => {
     try {
-      const b = await getBreeds();
-      setBreeds(b);
+      setBreeds(await getBreeds());
       const params = {};
       if (filterBreed) params.breed_id = filterBreed;
       if (filterRole) params.role = filterRole;
-      const a = await getAnimals(params);
-      setAnimals(a);
-      const c = await getContacts();
-      setContacts(c);
+      setAnimals(await getAnimals(params));
+      setContacts(await getContacts());
     } catch (err) {
       if (err.message === 'unauthorized') { clearAdminKey(); setAuthed(false); }
     }
@@ -262,39 +293,47 @@ export default function Admin() {
             )}
 
             <div className="space-y-3">
-              {animals.map(animal => (
-                <div key={animal.id} className="bg-white rounded-xl border border-cream-200 p-4">
-                  <div className="flex items-start gap-3">
-                    {animal.animal_photos?.[0] ? (
-                      <img src={(animal.animal_photos.find(p => p.is_primary) || animal.animal_photos[0]).url}
-                        alt="" className="w-16 h-16 rounded-lg object-cover" />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-cream-100 flex items-center justify-center"><Image className="w-6 h-6 text-cream-300" /></div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-display font-semibold text-charcoal-600">{animal.name}</h3>
-                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${animal.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{animal.sex}</span>
-                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                          animal.role === 'available' ? 'bg-green-100 text-green-700' : animal.role === 'parent' ? 'bg-blue-50 text-blue-600' :
-                          animal.role === 'sold' ? 'bg-charcoal-50 text-charcoal-400' : 'bg-wheat-100 text-wheat-600'
-                        }`}>{animal.role}</span>
+              {animals.map(animal => {
+                const media = animal.animal_media || [];
+                const primaryMedia = media.find(m => m.is_primary) || media[0];
+                const photoCount = media.filter(m => m.media_type === 'photo').length;
+                const videoCount = media.filter(m => m.media_type === 'video').length;
+                return (
+                  <div key={animal.id} className="bg-white rounded-xl border border-cream-200 p-4">
+                    <div className="flex items-start gap-3">
+                      {primaryMedia ? (
+                        primaryMedia.media_type === 'video' ? (
+                          <div className="w-16 h-16 rounded-lg bg-charcoal-700 flex items-center justify-center"><Play className="w-6 h-6 text-white/80" /></div>
+                        ) : (
+                          <img src={primaryMedia.url} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                        )
+                      ) : (
+                        <div className="w-16 h-16 rounded-lg bg-cream-100 flex items-center justify-center"><Image className="w-6 h-6 text-cream-300" /></div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-display font-semibold text-charcoal-600">{animal.name}</h3>
+                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${animal.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{animal.sex}</span>
+                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                            animal.role === 'available' ? 'bg-green-100 text-green-700' : animal.role === 'parent' ? 'bg-blue-50 text-blue-600' :
+                            animal.role === 'sold' ? 'bg-charcoal-50 text-charcoal-400' : 'bg-wheat-100 text-wheat-600'
+                          }`}>{animal.role}</span>
+                        </div>
+                        <p className="text-xs text-charcoal-300">{breedName(animal.breed_id)}{photoCount || videoCount ? ` · ${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''}` : ''}</p>
+                        {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
                       </div>
-                      <p className="text-xs text-charcoal-300">{breedName(animal.breed_id)}</p>
-                      {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
+                      <div className="flex gap-1">
+                        <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
+                        <button onClick={async () => { if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); } }}
+                          className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
-                      <button onClick={async () => {
-                        if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); }
-                      }} className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                    <div className="mt-3">
+                      <MediaUploader animalId={animal.id} existingMedia={media} onUpdate={loadData} />
                     </div>
                   </div>
-                  <div className="mt-3">
-                    <PhotoUploader animalId={animal.id} existingPhotos={animal.animal_photos || []} onUpdate={loadData} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {animals.length === 0 && <div className="text-center py-12 text-charcoal-300"><p className="font-body">No animals yet. Tap "Add Animal" to get started!</p></div>}
             </div>
           </>

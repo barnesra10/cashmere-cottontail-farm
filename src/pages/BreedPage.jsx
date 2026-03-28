@@ -79,12 +79,12 @@ export default function BreedPage({ breed }) {
         ) : parents.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {parents.map((parent) => {
-              const primaryPhoto = parent.animal_photos?.find(p => p.is_primary) || parent.animal_photos?.[0];
+              const primaryPhoto = parent.animal_media?.find(p => p.is_primary) || parent.animal_media?.[0];
               return (
                 <div key={parent.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
                   {primaryPhoto ? (
                     <div className="aspect-square bg-cream-100 img-hover-zoom">
-                      <img src={primaryPhoto.url} alt={parent.name} className="w-full h-full object-cover" />
+                      {primaryPhoto.media_type === "video" ? (<video src={primaryPhoto.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />) : (<img src={primaryPhoto.url} alt={parent.name} className="w-full h-full object-cover" />)}
                     </div>
                   ) : (
                     <div className="aspect-square bg-cream-100 flex items-center justify-center">

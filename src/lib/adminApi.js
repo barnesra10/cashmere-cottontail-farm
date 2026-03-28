@@ -1,11 +1,6 @@
-// Admin API client — all write operations go through the Supabase Edge Function
-// which holds the service_role key server-side. The admin password is sent
-// via the x-admin-key header and never stored in the browser beyond the session.
-
 const EDGE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
 
 let adminKey = null;
-
 export function setAdminKey(key) { adminKey = key; }
 export function getAdminKey() { return adminKey; }
 export function clearAdminKey() { adminKey = null; }
@@ -35,16 +30,18 @@ export const createAnimal = (body) => api('/animals', { method: 'POST', body });
 export const updateAnimal = (id, body) => api(`/animals/${id}`, { method: 'PUT', body });
 export const deleteAnimal = (id) => api(`/animals/${id}`, { method: 'DELETE' });
 
-// Photos
-export const uploadPhoto = (animalId, file, isPrimary = false) => {
+// Media (photos + videos)
+export const uploadMedia = (animalId, file, isPrimary = false) => {
+  const isVideo = file.type.startsWith('video/');
   const form = new FormData();
   form.append('file', file);
   form.append('animal_id', animalId);
   form.append('is_primary', isPrimary.toString());
-  return api('/photos/upload', { method: 'POST', body: form });
+  form.append('media_type', isVideo ? 'video' : 'photo');
+  return api('/media/upload', { method: 'POST', body: form });
 };
-export const deletePhoto = (id) => api(`/photos/${id}`, { method: 'DELETE' });
-export const setPrimaryPhoto = (photoId, animalId) => api('/photos/primary', { method: 'PUT', body: { photo_id: photoId, animal_id: animalId } });
+export const deleteMedia = (id) => api(`/media/${id}`, { method: 'DELETE' });
+export const setPrimaryMedia = (mediaId, animalId) => api('/media/primary', { method: 'PUT', body: { media_id: mediaId, animal_id: animalId } });
 
 // Contacts
 export const getContacts = () => api('/contacts');

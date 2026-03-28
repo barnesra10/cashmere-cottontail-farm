@@ -49,12 +49,12 @@ export default function AvailablePage({ breed }) {
           ) : available.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {available.map((animal) => {
-                const primaryPhoto = animal.animal_photos?.find(p => p.is_primary) || animal.animal_photos?.[0];
+                const primaryPhoto = animal.animal_media?.find(p => p.is_primary) || animal.animal_media?.[0];
                 return (
                   <div key={animal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
                     {primaryPhoto ? (
                       <div className="aspect-square bg-cream-100 img-hover-zoom">
-                        <img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />
+                        {primaryPhoto.media_type === "video" ? (<video src={primaryPhoto.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />) : (<img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />)}
                       </div>
                     ) : (
                       <div className="aspect-square bg-cream-100 flex items-center justify-center">

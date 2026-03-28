@@ -49,7 +49,7 @@ export function useAnimals(breedId, role) {
     if (!breedId) return;
     let query = supabase
       .from('animals')
-      .select('*, animal_photos(*)')
+      .select('*, animal_media(*)')
       .eq('breed_id', breedId)
       .order('sort_order');
 
