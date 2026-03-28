@@ -68,6 +68,7 @@ export default function BillOfSale() {
   const [buyerSig, setBuyerSig] = useState(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const set = (k, v) => setBuyer(prev => ({ ...prev, [k]: v }));
 
@@ -101,11 +102,8 @@ export default function BillOfSale() {
     const price = selectedAnimal.price ? Number(selectedAnimal.price) : 0;
     const billHtml = buildBillHtml(selectedAnimal, buyer, price, today, buyerSig);
 
-    // Open bill of sale in new window for print/save
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(billHtml); w.document.close(); }
-
     // Send emails via Resend (to buyer + always to Raegon)
+    let emailSent = false;
     try {
       const key = sessionStorage.getItem('ccf_admin_key');
       const emailRes = await fetch(BILL_API, {
@@ -119,6 +117,7 @@ export default function BillOfSale() {
         })
       });
       const emailResult = await emailRes.json();
+      emailSent = emailResult.success;
       if (!emailResult.success) console.warn('Email issue:', emailResult);
     } catch (e) { console.error('Email error:', e); }
 
@@ -127,6 +126,8 @@ export default function BillOfSale() {
       const key = sessionStorage.getItem('ccf_admin_key');
       await fetch(`${ADMIN_API}/animals/${selectedAnimal.id}/sold`, { method: 'PUT', headers: { 'x-admin-key': key } });
     } catch (e) { console.error(e); }
+
+    setEmailSent(emailSent);
 
     setDone(true); setSending(false);
   };
@@ -138,10 +139,16 @@ export default function BillOfSale() {
     <><SEO title="Bill of Sale Complete" />
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
       <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
-      <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Bill of Sale Complete!</h1>
-      <p className="font-body text-charcoal-400 mb-1">Bill of sale has been sent!</p>
-      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Buyer copy emailed to: <strong>{buyer.email}</strong></p>}
-      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold. Print window also opened.</p>
+      <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Sale Complete!</h1>
+      {emailSent ? (
+        <div className="mb-6">
+          <p className="font-body text-charcoal-400 mb-1">Bill of sale emailed successfully.</p>
+          {buyer.email && <p className="font-body text-sm text-charcoal-300">Buyer copy sent to: {buyer.email}</p>}
+        </div>
+      ) : (
+        <p className="font-body text-charcoal-400 mb-6">There was an issue sending the email. Please try again from Admin.</p>
+      )}
+      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} has been marked as sold.</p>
       <a href="/admin" className="bg-sage-500 text-white font-semibold px-6 py-3 rounded-full">Back to Admin</a>
     </div></>
   );
@@ -286,6 +293,5 @@ h1{font-size:22px;text-align:center;margin-bottom:2px;letter-spacing:2px;text-tr
 <div class="sb"><img src="${buyerSig}" alt="Buyer signature"/>
 <div class="sl"><strong>Buyer:</strong> ${buyer.name}<br/>Date: ${date}</div></div></div>
 <div class="ft">Cashmere Cottontail Farm, LLC &middot; 17799 Bethlehem Rd &middot; Winslow, AR 72762 &middot; (479) 531-0849 &middot; cashmerecottontailfarm.com<br/>This document constitutes a binding bill of sale for the transfer of livestock in the State of Arkansas.</div>
-<script>window.onload=function(){window.print()}</script>
 </body></html>`;
 }
