@@ -8,6 +8,7 @@ import ProducePage from './pages/Produce';
 import Contact from './pages/Contact';
 import Admin from './pages/Admin';
 import QuickPost from './pages/QuickPost';
+import SocialPreview from './pages/SocialPreview';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="admin" element={<Admin />} />
           <Route path="post" element={<QuickPost />} />
+          <Route path="social" element={<SocialPreview />} />
           <Route path=":breedSlug" element={<BreedPageWrapper />} />
           <Route path=":breedSlug/available" element={<AvailablePageWrapper />} />
           <Route path="*" element={<NotFound />} />

@@ -47,6 +47,7 @@ export default function QuickPost() {
     setPosting(true);
 
     const formData = new FormData();
+    formData.append('skip_social', 'true'); // Don't auto-post — we'll preview first
     Object.entries(form).forEach(([k, v]) => { if (v) formData.append(k, v); });
     files.forEach((file, i) => formData.append(`media${i}`, file));
 
@@ -58,9 +59,21 @@ export default function QuickPost() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccess({ message: data.message, caption: data.caption || '' });
-        setForm({ name: '', breed: 'valais', sex: 'female', role: 'available', price: '', description: '', sire: '', dam: '', status: 'available' });
-        setFiles([]);
+        // Store animal data for the social preview page
+        const breedLabel = breedOptions.find(b => b.slug === form.breed)?.label || form.breed;
+        sessionStorage.setItem('ccf_social_preview', JSON.stringify({
+          animal: data.animal,
+          breedName: breedLabel,
+          media_urls: data.media_count > 0 ? (data.media_urls || []) : [],
+          name: form.name,
+          breed: form.breed,
+          sex: form.sex,
+          role: form.role,
+          price: form.price,
+          description: form.description,
+        }));
+        // Navigate to social preview
+        window.location.href = '/social';
       } else {
         alert('Error: ' + (data.error || 'Unknown error'));
       }
