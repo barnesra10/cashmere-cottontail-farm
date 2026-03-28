@@ -102,20 +102,26 @@ export default function BillOfSale() {
     const price = selectedAnimal.price ? Number(selectedAnimal.price) : 0;
     const billHtml = buildBillHtml(selectedAnimal, buyer, price, today, buyerSig);
 
-    // Open bill of sale in new window for print/save/share
+    // Open bill of sale in new window for print/save
     const w = window.open('', '_blank');
     if (w) { w.document.write(billHtml); w.document.close(); }
 
-    // If buyer email provided, open mailto with pre-filled subject
-    if (buyer.email) {
-      const subject = encodeURIComponent(`Bill of Sale - ${selectedAnimal.name} - Cashmere Cottontail Farm`);
-      const body = encodeURIComponent(`Hi ${buyer.name},\n\nAttached is your Bill of Sale for ${selectedAnimal.name} from Cashmere Cottontail Farm.\n\nPlease save or print the bill of sale from the window that just opened.\n\nThank you for your purchase!\n\nCashmere Cottontail Farm, LLC\n17799 Bethlehem Rd, Winslow, AR 72762\n(479) 531-0849\ncashmerecottontailfarm.com`);
-      const emails = [buyer.email, sellerEmail].filter(Boolean).join(',');
-      // Small delay so print window opens first
-      setTimeout(() => {
-        window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
-      }, 500);
-    }
+    // Send emails via Resend (to buyer + always to Raegon)
+    try {
+      const key = sessionStorage.getItem('ccf_admin_key');
+      const emailRes = await fetch(BILL_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        body: JSON.stringify({
+          buyer_email: buyer.email || null,
+          buyer_name: buyer.name,
+          animal_name: selectedAnimal.name,
+          html: billHtml,
+        })
+      });
+      const emailResult = await emailRes.json();
+      if (!emailResult.success) console.warn('Email issue:', emailResult);
+    } catch (e) { console.error('Email error:', e); }
 
     // Mark sold
     try {
@@ -134,10 +140,9 @@ export default function BillOfSale() {
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
       <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
       <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Bill of Sale Complete!</h1>
-      <p className="font-body text-charcoal-400 mb-1">Bill of sale opened in a new window.</p>
-      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Email draft opened to: <strong>{buyer.email}</strong></p>}
-      <p className="font-body text-sm text-charcoal-300 mb-1">Use the print window to <strong>Share → Save to Files</strong> or <strong>Print to PDF</strong>, then attach it to the email.</p>
-      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold.</p>
+      <p className="font-body text-charcoal-400 mb-1">Emailed to: <strong>Raegon@cashmerecottontailfarm.com</strong></p>
+      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Buyer copy to: <strong>{buyer.email}</strong></p>}
+      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold. Print window also opened.</p>
       <a href="/admin" className="bg-sage-500 text-white font-semibold px-6 py-3 rounded-full">Back to Admin</a>
     </div></>
   );
@@ -201,10 +206,7 @@ export default function BillOfSale() {
             <input placeholder="Phone" value={buyer.phone} onChange={e => set('phone', e.target.value)} type="tel" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
           </div>
 
-          <div className="mb-5">
-            <label className="text-sm font-semibold text-charcoal-500 block mb-2">Send seller copy to (optional)</label>
-            <input placeholder="Your email for a copy" value={sellerEmail} onChange={e => setSellerEmail(e.target.value)} type="email" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
-          </div>
+          <p className="text-[10px] text-charcoal-300 mb-5">Seller copy will be emailed to Raegon@cashmerecottontailfarm.com</p>
 
           <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Buyer Signature</h2>
           <div className="mb-6">
