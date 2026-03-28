@@ -39,18 +39,20 @@ function SignaturePad({ label, onSave, saved }) {
       <p className="text-sm font-semibold text-charcoal-600">{label}</p>
       <div className={`border-2 rounded-xl overflow-hidden ${saved ? 'border-green-400 bg-green-50' : 'border-charcoal-200'}`}>
         {saved ? (
-          <div className="h-28 flex items-center justify-center gap-2 text-green-600"><Check className="w-5 h-5" /> Signature captured</div>
+          <div className="h-32 flex items-center justify-center gap-2 text-green-600"><Check className="w-5 h-5" /> Signature captured</div>
         ) : (
-          <canvas ref={canvasRef} className="w-full h-28 bg-white touch-none"
+          <canvas ref={canvasRef} className="w-full h-32 bg-white touch-none"
             onMouseDown={start} onMouseMove={draw} onMouseUp={end} onMouseLeave={end}
             onTouchStart={start} onTouchMove={draw} onTouchEnd={end} />
         )}
       </div>
       {!saved && (
         <div className="flex gap-2">
-          <button onClick={clear} className="text-xs text-charcoal-300">Clear</button>
+          <button onClick={clear} className="flex-1 py-2.5 text-sm text-charcoal-400 bg-cream-100 border border-cream-200 rounded-full font-semibold">Clear</button>
           <button onClick={() => { if (hasContent) onSave(canvasRef.current.toDataURL('image/png')); }} disabled={!hasContent}
-            className="text-xs font-semibold text-sage-500 disabled:opacity-30">Accept Signature</button>
+            className="flex-[2] py-2.5 text-sm font-bold text-white bg-sage-500 rounded-full disabled:opacity-30 disabled:bg-charcoal-200">
+            ✓ Accept Signature
+          </button>
         </div>
       )}
     </div>
@@ -93,26 +95,27 @@ export default function BillOfSale() {
   }, [animals]);
 
   const submit = async () => {
-    if (!selectedAnimal || !buyer.name || !buyer.email || !buyerSig) {
-      alert('Please fill in buyer name, email, and signature'); return;
+    if (!selectedAnimal || !buyer.name || !buyerSig) {
+      alert('Please fill in buyer name and signature'); return;
     }
     setSending(true);
     const price = selectedAnimal.price ? Number(selectedAnimal.price) : 0;
     const billHtml = buildBillHtml(selectedAnimal, buyer, price, today, buyerSig);
 
-    // Send email
-    try {
-      const key = sessionStorage.getItem('ccf_admin_key');
-      await fetch(BILL_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
-        body: JSON.stringify({ buyer_email: buyer.email, seller_email: sellerEmail || null, buyer_name: buyer.name, animal_name: selectedAnimal.name, html: billHtml })
-      });
-    } catch (e) { console.error('Email error:', e); }
-
-    // Open print view
+    // Open bill of sale in new window for print/save/share
     const w = window.open('', '_blank');
     if (w) { w.document.write(billHtml); w.document.close(); }
+
+    // If buyer email provided, open mailto with pre-filled subject
+    if (buyer.email) {
+      const subject = encodeURIComponent(`Bill of Sale - ${selectedAnimal.name} - Cashmere Cottontail Farm`);
+      const body = encodeURIComponent(`Hi ${buyer.name},\n\nAttached is your Bill of Sale for ${selectedAnimal.name} from Cashmere Cottontail Farm.\n\nPlease save or print the bill of sale from the window that just opened.\n\nThank you for your purchase!\n\nCashmere Cottontail Farm, LLC\n17799 Bethlehem Rd, Winslow, AR 72762\n(479) 531-0849\ncashmerecottontailfarm.com`);
+      const emails = [buyer.email, sellerEmail].filter(Boolean).join(',');
+      // Small delay so print window opens first
+      setTimeout(() => {
+        window.location.href = `mailto:${emails}?subject=${subject}&body=${body}`;
+      }, 500);
+    }
 
     // Mark sold
     try {
@@ -131,9 +134,10 @@ export default function BillOfSale() {
     <div className="max-w-lg mx-auto px-4 py-16 text-center">
       <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
       <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Bill of Sale Complete!</h1>
-      <p className="font-body text-charcoal-400 mb-1">Emailed to: <strong>{buyer.email}</strong></p>
-      {sellerEmail && <p className="font-body text-charcoal-400 mb-1">Copy to: <strong>{sellerEmail}</strong></p>}
-      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold. A print window was also opened.</p>
+      <p className="font-body text-charcoal-400 mb-1">Bill of sale opened in a new window.</p>
+      {buyer.email && <p className="font-body text-charcoal-400 mb-1">Email draft opened to: <strong>{buyer.email}</strong></p>}
+      <p className="font-body text-sm text-charcoal-300 mb-1">Use the print window to <strong>Share → Save to Files</strong> or <strong>Print to PDF</strong>, then attach it to the email.</p>
+      <p className="font-body text-sm text-charcoal-300 mb-6">{selectedAnimal?.name} marked as sold.</p>
       <a href="/admin" className="bg-sage-500 text-white font-semibold px-6 py-3 rounded-full">Back to Admin</a>
     </div></>
   );
@@ -187,7 +191,7 @@ export default function BillOfSale() {
           <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Buyer Information</h2>
           <div className="space-y-3 mb-5">
             <input placeholder="Full legal name *" value={buyer.name} onChange={e => set('name', e.target.value)} className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
-            <input placeholder="Email address *" value={buyer.email} onChange={e => set('email', e.target.value)} type="email" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
+            <input placeholder="Email (to send them a copy)" value={buyer.email} onChange={e => set('email', e.target.value)} type="email" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
             <input placeholder="Street address" value={buyer.address} onChange={e => set('address', e.target.value)} className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
             <div className="grid grid-cols-3 gap-2">
               <input placeholder="City" value={buyer.city} onChange={e => set('city', e.target.value)} className="px-3 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
@@ -207,11 +211,11 @@ export default function BillOfSale() {
             <SignaturePad label="Sign below with your finger" onSave={setBuyerSig} saved={!!buyerSig} />
           </div>
 
-          <button onClick={submit} disabled={sending || !buyer.name || !buyer.email || !buyerSig}
+          <button onClick={submit} disabled={sending || !buyer.name || !buyerSig}
             className="w-full bg-sage-500 hover:bg-sage-600 disabled:opacity-40 text-white font-semibold py-4 rounded-full flex items-center justify-center gap-2 text-lg shadow-lg">
-            {sending ? <><Loader className="w-5 h-5 animate-spin" /> Sending...</> : <><Send className="w-5 h-5" /> Submit &amp; Email Bill of Sale</>}
+            {sending ? <><Loader className="w-5 h-5 animate-spin" /> Processing...</> : <><Send className="w-5 h-5" /> Complete Sale</>}
           </button>
-          <p className="text-[10px] text-charcoal-300 text-center mt-3">Emails bill of sale to buyer, opens print view, and marks animal as sold.</p>
+          <p className="text-[10px] text-charcoal-300 text-center mt-3">Opens bill of sale for printing/sharing{buyer.email ? ' and drafts an email' : ''}. Marks animal as sold.</p>
         </>
       )}
     </div></>
