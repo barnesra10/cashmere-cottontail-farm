@@ -4,10 +4,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        cream:    { 50: '#fdfcfa', 100: '#faf8f5', 200: '#f3efe8', 300: '#e8e0d4' },
-        charcoal: { 50: '#f5f5f5', 100: '#e0e0e0', 200: '#b0b0b0', 300: '#808080', 400: '#606060', 500: '#404040', 600: '#2c2c2c', 700: '#1a1a1a', 800: '#111111' },
-        sage:     { 50: '#f4f7f4', 100: '#e4ebe4', 200: '#c8d6c8', 300: '#9bb59b', 400: '#6e946e', 500: '#4a7a4a', 600: '#3a6139' },
-        wheat:    { 50: '#fefdfb', 100: '#fdf9f0', 200: '#f9efd8', 300: '#f2e0b5', 400: '#e8cc8a', 500: '#d4b060' },
+        // Logo palette: cream background, black silhouettes, warm gray plaid
+        cream:    { 50: '#fdfcfa', 100: '#f5f3ee', 200: '#ece8e0', 300: '#ddd6ca' },
+        charcoal: { 50: '#f5f4f3', 100: '#e0dedc', 200: '#b0aca6', 300: '#807a72', 400: '#605a52', 500: '#3d3832', 600: '#2c2826', 700: '#1a1816', 800: '#111010' },
+        // "sage" remapped to warm charcoal (primary action color from logo black)
+        sage:     { 50: '#f5f4f3', 100: '#e0dedc', 200: '#c8c2b8', 300: '#9a9085', 400: '#6b6259', 500: '#3d3832', 600: '#2c2826' },
+        // "wheat" remapped to warm plaid taupe (accent from logo plaid band)
+        wheat:    { 50: '#faf8f5', 100: '#f0ece5', 200: '#e0d8cc', 300: '#d4cfc7', 400: '#c0b8aa', 500: '#b0a99d' },
         plaid:    { light: '#d4cfc7', mid: '#b8b0a4', dark: '#9a9085' }
       },
       fontFamily: {

@@ -6,8 +6,8 @@ import { useAnimals } from '../hooks/useData';
 
 const heroColors = {
   'valais-blacknose-sheep': 'from-charcoal-600 to-charcoal-700',
-  'pygmy-goats': 'from-sage-500 to-sage-600',
-  'mini-rex-rabbits': 'from-wheat-400 to-wheat-500',
+  'pygmy-goats': 'from-charcoal-400 to-charcoal-500',
+  'mini-rex-rabbits': 'from-plaid-mid to-plaid-dark',
   'miniature-dachshunds': 'from-charcoal-500 to-charcoal-600',
   'silkie-chickens': 'from-plaid-mid to-plaid-dark'
 };
