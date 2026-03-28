@@ -226,6 +226,7 @@ export default function BillOfSale() {
           buyer_email: buyer.email || null,
           buyer_name: buyer.name,
           animal_name: selectedAnimal.name,
+          animal_id: selectedAnimal.id,
           html: billHtml,
           pdf_base64: pdfBase64 || null,
         })

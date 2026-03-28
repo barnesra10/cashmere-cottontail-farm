@@ -358,6 +358,11 @@ export default function Admin() {
                           }`}>{animal.role}</span>
                         </div>
                         <p className="text-xs text-charcoal-300">{breedName(animal.breed_id)}{photoCount || videoCount ? ` · ${photoCount} photo${photoCount !== 1 ? 's' : ''}, ${videoCount} video${videoCount !== 1 ? 's' : ''}` : ''}</p>
+                        {(() => { const doc = media.find(m => m.media_type === 'document'); return doc ? (
+                          <a href={doc.url} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 mt-0.5">
+                            <FileText className="w-3 h-3" /> Bill of Sale PDF
+                          </a>
+                        ) : null; })()}
                         {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
                       </div>
                       <div className="flex gap-1">
