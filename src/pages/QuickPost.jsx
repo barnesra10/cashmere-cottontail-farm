@@ -57,7 +57,7 @@ export default function QuickPost() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccess(data.message);
+        setSuccess({ message: data.message, caption: data.caption || '' });
         setForm({ name: '', breed: 'valais', sex: 'female', role: 'available', price: '', description: '', sire: '', dam: '', status: 'available' });
         setFiles([]);
       } else {
@@ -97,13 +97,32 @@ export default function QuickPost() {
   }
 
   if (success) {
+    const [copied, setCopied] = useState(false);
+    const copyCaption = () => {
+      navigator.clipboard.writeText(success.caption);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    };
     return (
       <>
         <SEO title="Quick Post" description="Quick post animals" />
-        <div className="max-w-sm mx-auto px-4 py-24 text-center">
+        <div className="max-w-sm mx-auto px-4 py-16 text-center">
           <CheckCircle className="w-16 h-16 text-sage-500 mx-auto mb-4" />
           <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Posted!</h1>
-          <p className="font-body text-charcoal-400 mb-6">{success}</p>
+          <p className="font-body text-charcoal-400 mb-4">{success.message}</p>
+
+          {success.caption && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-left mb-6">
+              <p className="text-xs font-semibold text-blue-600 mb-2">AI-Generated Social Caption:</p>
+              <p className="text-sm text-charcoal-600 leading-relaxed whitespace-pre-wrap">{success.caption}</p>
+              <button onClick={copyCaption}
+                className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-full flex items-center justify-center gap-2 transition-colors">
+                {copied ? <><CheckCircle className="w-4 h-4" /> Copied!</> : 'Copy Caption to Clipboard'}
+              </button>
+              <p className="text-[10px] text-blue-400 mt-2 text-center">Paste into Facebook, Instagram, TikTok, etc.</p>
+            </div>
+          )}
+
           <button onClick={() => setSuccess(null)}
             className="w-full bg-sage-500 hover:bg-sage-600 text-white font-semibold py-3 rounded-full">
             Post Another

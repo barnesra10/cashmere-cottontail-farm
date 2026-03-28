@@ -54,3 +54,6 @@ export const deleteLitter = (id) => api(`/litters/${id}`, { method: 'DELETE' });
 
 // Breeds
 export const getBreeds = () => api('/breeds');
+
+// Social
+export const postToSocial = (animalId) => api(`/animals/${animalId}/social`, { method: 'POST' });

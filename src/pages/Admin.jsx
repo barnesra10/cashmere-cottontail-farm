@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { setAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead } from '../lib/adminApi';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play } from 'lucide-react';
+import { setAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
@@ -323,10 +323,38 @@ export default function Admin() {
                         {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
                       </div>
                       <div className="flex gap-1">
+                        <button onClick={async () => {
+                          if (media.length === 0) { alert('Add at least one photo or video before sharing'); return; }
+                          const btn = event.currentTarget;
+                          btn.disabled = true;
+                          try {
+                            const result = await postToSocial(animal.id);
+                            if (result.caption) {
+                              const el = document.getElementById(`caption-${animal.id}`);
+                              if (el) { el.textContent = result.caption; el.parentElement.classList.remove('hidden'); }
+                            }
+                          } catch (err) { alert('Failed: ' + err.message); }
+                          btn.disabled = false;
+                        }} className="p-2 text-charcoal-300 hover:text-blue-500" title="Generate & share to social">
+                          <Share2 className="w-4 h-4" />
+                        </button>
                         <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
                         <button onClick={async () => { if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); } }}
                           className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                       </div>
+                    </div>
+                    {/* Social caption display */}
+                    <div id={`caption-wrap-${animal.id}`} className="hidden mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p id={`caption-${animal.id}`} className="text-xs text-charcoal-600 leading-relaxed" />
+                        <button onClick={() => {
+                          const text = document.getElementById(`caption-${animal.id}`)?.textContent;
+                          if (text) { navigator.clipboard.writeText(text); }
+                        }} className="flex-shrink-0 p-1 text-blue-400 hover:text-blue-600" title="Copy caption">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-blue-400 mt-1">Copy this caption to paste on Facebook, Instagram, TikTok</p>
                     </div>
                     <div className="mt-3">
                       <MediaUploader animalId={animal.id} existingMedia={media} onUpdate={loadData} />
