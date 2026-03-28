@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle } from 'lucide-react';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
@@ -352,14 +352,22 @@ export default function Admin() {
                           <Share2 className="w-4 h-4" />
                         </button>
                         {animal.role !== 'sold' && (
-                          <button onClick={async () => {
-                            if (confirm(`Mark ${animal.name} as sold?`)) {
-                              await markAsSold(animal.id);
-                              loadData();
-                            }
-                          }} className="p-2 text-charcoal-300 hover:text-green-600" title="Mark as sold">
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button onClick={() => {
+                              sessionStorage.setItem('ccf_bill_of_sale_animal', JSON.stringify(animal));
+                              window.location.href = '/bill-of-sale';
+                            }} className="p-2 text-charcoal-300 hover:text-amber-600" title="Bill of Sale">
+                              <FileText className="w-4 h-4" />
+                            </button>
+                            <button onClick={async () => {
+                              if (confirm(`Mark ${animal.name} as sold?`)) {
+                                await markAsSold(animal.id);
+                                loadData();
+                              }
+                            }} className="p-2 text-charcoal-300 hover:text-green-600" title="Mark as sold">
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                         <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
                         <button onClick={async () => { if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); } }}
