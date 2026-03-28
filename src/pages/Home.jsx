@@ -28,7 +28,7 @@ export default function Home() {
             in the pasture — or even your backyard — every animal we breed was <em className="text-wheat-300">born to a purpose</em>.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/about" className="inline-flex items-center gap-2 bg-sage-500 hover:bg-sage-600 text-white font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl">
+            <Link to="/about" className="inline-flex items-center gap-2 text-charcoal-700 font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl" style={{ backgroundColor: '#c0b8aa' }}>
               Meet Our Animals <ArrowRight className="w-4 h-4" />
             </Link>
             <Link to="/contact" className="inline-flex items-center gap-2 bg-transparent border-2 border-cream-200/40 hover:border-cream-200/70 text-cream-100 font-body font-semibold px-8 py-3.5 rounded-full transition-colors">

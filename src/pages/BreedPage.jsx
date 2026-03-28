@@ -4,17 +4,17 @@ import SEO from '../components/SEO';
 import MediaGallery from '../components/MediaGallery';
 import { useAnimals } from '../hooks/useData';
 
-const heroColors = {
-  'valais-blacknose-sheep': 'from-charcoal-600 to-charcoal-700',
-  'pygmy-goats': 'from-charcoal-400 to-charcoal-500',
-  'mini-rex-rabbits': 'from-plaid-mid to-plaid-dark',
-  'miniature-dachshunds': 'from-charcoal-500 to-charcoal-600',
-  'silkie-chickens': 'from-plaid-mid to-plaid-dark'
+const breedBgColors = {
+  'valais-blacknose-sheep': '#2c2826',
+  'pygmy-goats': '#6b6259',
+  'mini-rex-rabbits': '#9a9085',
+  'miniature-dachshunds': '#4a4440',
+  'silkie-chickens': '#b0a99d'
 };
 
 export default function BreedPage({ breed }) {
   const { animals: parents, loading } = useAnimals(breed.id, 'parent');
-  const heroColor = heroColors[breed.slug] || 'from-charcoal-600 to-charcoal-700';
+  const heroColor = heroColors[breed.slug] || '#2c2826';
 
   return (
     <>
@@ -22,7 +22,7 @@ export default function BreedPage({ breed }) {
         description={`${breed.tagline} Learn about our ${breed.name} breeding program at Cashmere Cottontail Farm.`}
         path={`/${breed.slug}`} />
 
-      <section className={`bg-gradient-to-br ${heroColor} plaid-bg text-white`}>
+      <section style={{ backgroundColor: heroColor }} className="plaid-bg text-white">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
           <span className="text-6xl mb-4 block">{breed.emoji}</span>
           <h1 className="font-display text-3xl md:text-5xl font-bold">{breed.name}</h1>

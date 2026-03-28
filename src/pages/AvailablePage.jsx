@@ -4,18 +4,18 @@ import SEO from '../components/SEO';
 import MediaGallery from '../components/MediaGallery';
 import { useAnimals, useLitters } from '../hooks/useData';
 
-const heroColors = {
-  'valais-blacknose-sheep': 'from-charcoal-600 to-charcoal-700',
-  'pygmy-goats': 'from-charcoal-400 to-charcoal-500',
-  'mini-rex-rabbits': 'from-plaid-mid to-plaid-dark',
-  'miniature-dachshunds': 'from-charcoal-500 to-charcoal-600',
-  'silkie-chickens': 'from-plaid-mid to-plaid-dark'
+const breedBgColors = {
+  'valais-blacknose-sheep': '#2c2826',
+  'pygmy-goats': '#6b6259',
+  'mini-rex-rabbits': '#9a9085',
+  'miniature-dachshunds': '#4a4440',
+  'silkie-chickens': '#b0a99d'
 };
 
 export default function AvailablePage({ breed }) {
   const { animals: available, loading: loadingAnimals } = useAnimals(breed.id, 'available');
   const { litters, loading: loadingLitters } = useLitters(breed.id);
-  const heroColor = heroColors[breed.slug] || 'from-charcoal-600 to-charcoal-700';
+  const heroColor = heroColors[breed.slug] || '#2c2826';
 
   return (
     <>
@@ -23,7 +23,7 @@ export default function AvailablePage({ breed }) {
         description={`See available and upcoming ${breed.name} babies at Cashmere Cottontail Farm.`}
         path={`/${breed.slug}/available`} />
 
-      <section className={`bg-gradient-to-br ${heroColor} plaid-bg text-white`}>
+      <section style={{ backgroundColor: heroColor }} className="plaid-bg text-white">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <Link to={`/${breed.slug}`} className="inline-flex items-center gap-1 text-white/70 hover:text-white text-sm font-body mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to {breed.short_name}

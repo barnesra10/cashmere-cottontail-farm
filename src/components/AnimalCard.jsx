@@ -67,23 +67,24 @@ const silhouettes = {
   )
 };
 
-const heroColors = {
-  'valais-blacknose-sheep': 'from-charcoal-600 to-charcoal-700',
-  'pygmy-goats': 'from-charcoal-400 to-charcoal-500',
-  'mini-rex-rabbits': 'from-plaid-mid to-plaid-dark',
-  'miniature-dachshunds': 'from-charcoal-500 to-charcoal-600',
-  'silkie-chickens': 'from-plaid-mid to-plaid-dark'
+const breedStyles = {
+  'valais-blacknose-sheep': { bg: '#2c2826', hover: '#1a1816' },     // darkest — the black sheep
+  'pygmy-goats':            { bg: '#6b6259', hover: '#5c534a' },     // warm brown
+  'mini-rex-rabbits':       { bg: '#9a9085', hover: '#8a8078' },     // warm medium gray
+  'miniature-dachshunds':   { bg: '#4a4440', hover: '#3d3832' },     // dark warm charcoal
+  'silkie-chickens':        { bg: '#b0a99d', hover: '#9a9085' },     // light taupe
 };
 
 export default function AnimalCard({ breed, index }) {
-  const heroColor = heroColors[breed.slug] || 'from-charcoal-600 to-charcoal-700';
+  const style = breedStyles[breed.slug] || { bg: '#3d3832', hover: '#2c2826' };
   return (
     <Link to={`/${breed.slug}`}
-      className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-cream-200 hover:border-sage-200"
+      className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-cream-200 hover:border-cream-400"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Silhouette area */}
-      <div className={`aspect-[4/3] bg-gradient-to-br ${heroColor} flex items-center justify-center p-8 relative overflow-hidden`}>
+      <div className="aspect-[4/3] flex items-center justify-center p-8 relative overflow-hidden"
+        style={{ backgroundColor: style.bg }}>
         <div className="absolute inset-0 opacity-5">
           <div className="w-full h-full bg-plaid-pattern" />
         </div>
