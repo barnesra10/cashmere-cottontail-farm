@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-cream: #faf8f5;
+  --color-charcoal: #2c2c2c;
+  --color-sage: #4a7a4a;
+  --color-wheat: #d4b060;
+  --color-plaid-light: #d4cfc7;
+  --color-plaid-mid: #b8b0a4;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  font-family: 'Source Sans 3', sans-serif;
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+}
+
+/* Plaid texture overlay utility */
+.plaid-bg {
+  position: relative;
+}
+.plaid-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(180,170,158,0.12) 40px, rgba(180,170,158,0.12) 42px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(180,170,158,0.12) 40px, rgba(180,170,158,0.12) 42px),
+    repeating-linear-gradient(45deg, transparent, transparent 28px, rgba(160,150,138,0.06) 28px, rgba(160,150,138,0.06) 30px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Grain overlay */
+.grain::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f3efe8; }
+::-webkit-scrollbar-thumb { background: #b8b0a4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9a9085; }
+
+/* Selection */
+::selection { background: rgba(74,122,74,0.2); }
+
+/* Page transition */
+.page-enter { opacity: 0; transform: translateY(12px); }
+.page-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; }
+
+/* Image hover zoom */
+.img-hover-zoom { overflow: hidden; }
+.img-hover-zoom img { transition: transform 0.5s ease; }
+.img-hover-zoom:hover img { transform: scale(1.05); }
+
+/* Chat widget */
+.chat-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
