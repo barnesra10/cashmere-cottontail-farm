@@ -28,9 +28,9 @@ export default function Home() {
             in the pasture — or even your backyard — every animal we breed was <em className="text-wheat-300">born to a purpose</em>.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/about" className="inline-flex items-center gap-2 text-charcoal-700 font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl" style={{ backgroundColor: '#c0b8aa' }}>
+            <a href="#animals" className="inline-flex items-center gap-2 text-charcoal-700 font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl" style={{ backgroundColor: '#c0b8aa' }}>
               Meet Our Animals <ArrowRight className="w-4 h-4" />
-            </Link>
+            </a>
             <Link to="/contact" className="inline-flex items-center gap-2 bg-transparent border-2 border-cream-200/40 hover:border-cream-200/70 text-cream-100 font-body font-semibold px-8 py-3.5 rounded-full transition-colors">
               Get In Touch
             </Link>
@@ -59,7 +59,7 @@ export default function Home() {
       </section>
 
       {/* Animal Grid */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+      <section id="animals" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 scroll-mt-20">
         <div className="text-center mb-12">
           <h2 className="font-display text-2xl md:text-4xl text-charcoal-600 font-bold">
             Our <span className="font-script text-sage-500 font-normal">Animals</span>
