@@ -7,9 +7,9 @@ import { useAnimals } from '../hooks/useData';
 const breedBgColors = {
   'valais-blacknose-sheep': '#2c2826',
   'pygmy-goats': '#6b6259',
-  'mini-rex-rabbits': '#9a9085',
+  'mini-rex-rabbits':       '#c0b8aa',
   'miniature-dachshunds': '#4a4440',
-  'silkie-chickens': '#b0a99d'
+  'silkie-chickens':        '#807a72'
 };
 
 export default function BreedPage({ breed }) {

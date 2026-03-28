@@ -68,11 +68,11 @@ const silhouettes = {
 };
 
 const breedStyles = {
-  'valais-blacknose-sheep': { bg: '#2c2826', hover: '#1a1816' },     // darkest — the black sheep
+  'valais-blacknose-sheep': { bg: '#2c2826', hover: '#1a1816' },     // darkest black
   'pygmy-goats':            { bg: '#6b6259', hover: '#5c534a' },     // warm brown
-  'mini-rex-rabbits':       { bg: '#9a9085', hover: '#8a8078' },     // warm medium gray
-  'miniature-dachshunds':   { bg: '#4a4440', hover: '#3d3832' },     // dark warm charcoal
-  'silkie-chickens':        { bg: '#b0a99d', hover: '#9a9085' },     // light taupe
+  'mini-rex-rabbits':       { bg: '#c0b8aa', hover: '#b0a99d' },     // light warm taupe
+  'miniature-dachshunds':   { bg: '#4a4440', hover: '#3d3832' },     // dark charcoal
+  'silkie-chickens':        { bg: '#807a72', hover: '#6b6259' },     // medium gray-brown
 };
 
 export default function AnimalCard({ breed, index }) {
