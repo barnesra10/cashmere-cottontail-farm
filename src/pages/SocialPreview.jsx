@@ -53,6 +53,7 @@ const PLATFORM_CONFIG = {
 export default function SocialPreview() {
   const [loading, setLoading] = useState(true);
   const [captions, setCaptions] = useState({});
+  const [mediaUrls, setMediaUrls] = useState([]);
   const [enabled, setEnabled] = useState({ facebook: true, instagram: true, tiktok: true });
   const [editing, setEditing] = useState(null);
   const [posting, setPosting] = useState({});
@@ -61,7 +62,6 @@ export default function SocialPreview() {
   const [copied, setCopied] = useState(null);
 
   useEffect(() => {
-    // Get animal data from sessionStorage (set by QuickPost after creating)
     const data = sessionStorage.getItem('ccf_social_preview');
     if (data) {
       const parsed = JSON.parse(data);
@@ -79,13 +79,13 @@ export default function SocialPreview() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKeyFromSession() },
         body: JSON.stringify({
+          animal_id: data.animal_id || data.animal?.id,
           animal_name: data.animal?.name || data.name,
           breed: data.breedName || data.breed,
           sex: data.animal?.sex || data.sex,
           role: data.animal?.role || data.role,
           price: data.animal?.price || data.price,
           description: data.animal?.description || data.description,
-          media_urls: data.media_urls || [],
         })
       });
       const result = await res.json();
@@ -94,6 +94,7 @@ export default function SocialPreview() {
         instagram: result.instagram || '',
         tiktok: result.tiktok || '',
       });
+      if (result.media_urls) setMediaUrls(result.media_urls);
     } catch (err) {
       console.error('Failed to generate captions:', err);
     }
@@ -109,7 +110,8 @@ export default function SocialPreview() {
         body: JSON.stringify({
           platform,
           caption: captions[platform],
-          media_urls: animalData?.media_urls || [],
+          animal_id: animalData?.animal_id || animalData?.animal?.id,
+          media_urls: mediaUrls,
         })
       });
       const result = await res.json();
@@ -163,7 +165,7 @@ export default function SocialPreview() {
         {animalData && (
           <div className="bg-cream-100 rounded-xl p-4 mb-6 border border-cream-200">
             <p className="font-display font-semibold text-charcoal-600">{animalData.animal?.name || animalData.name}</p>
-            <p className="text-xs text-charcoal-300">{animalData.breedName || animalData.breed} · {animalData.animal?.sex || animalData.sex} · {animalData.media_urls?.length || 0} media</p>
+            <p className="text-xs text-charcoal-300">{animalData.breedName || animalData.breed} · {animalData.animal?.sex || animalData.sex} · {mediaUrls.length} media</p>
           </div>
         )}
 

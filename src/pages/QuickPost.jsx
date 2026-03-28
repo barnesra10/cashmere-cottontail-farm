@@ -81,8 +81,8 @@ export default function QuickPost() {
         const breedLabel = breedOptions.find(b => b.slug === form.breed)?.label || form.breed;
         sessionStorage.setItem('ccf_social_preview', JSON.stringify({
           animal: data.animal,
+          animal_id: data.animal.id,
           breedName: breedLabel,
-          media_urls: data.media_count > 0 ? (data.media_urls || []) : [],
           name: form.name,
           breed: form.breed,
           sex: form.sex,
