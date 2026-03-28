@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
+import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
 import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle } from 'lucide-react';
 import SEO from '../components/SEO';
@@ -345,6 +345,16 @@ export default function Admin() {
                           className={`p-2 ${shareAnimal === animal.id ? 'text-blue-500' : 'text-charcoal-300 hover:text-blue-500'}`} title="Share to social media">
                           <Share2 className="w-4 h-4" />
                         </button>
+                        {animal.role !== 'sold' && (
+                          <button onClick={async () => {
+                            if (confirm(`Mark ${animal.name} as sold?`)) {
+                              await markAsSold(animal.id);
+                              loadData();
+                            }
+                          }} className="p-2 text-charcoal-300 hover:text-green-600" title="Mark as sold">
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
                         <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
                         <button onClick={async () => { if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); } }}
                           className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>

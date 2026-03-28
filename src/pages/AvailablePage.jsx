@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Camera, Bell, Heart } from 'lucide-react';
+import { ArrowLeft, Calendar, Camera, Bell, Heart, Award } from 'lucide-react';
 import SEO from '../components/SEO';
 import MediaGallery from '../components/MediaGallery';
 import { useAnimals, useLitters } from '../hooks/useData';
@@ -14,6 +14,7 @@ const breedBgColors = {
 
 export default function AvailablePage({ breed }) {
   const { animals: available, loading: loadingAnimals } = useAnimals(breed.id, 'available');
+  const { animals: sold, loading: loadingSold } = useAnimals(breed.id, 'sold');
   const { litters, loading: loadingLitters } = useLitters(breed.id);
   const heroColor = breedBgColors[breed.slug] || '#2c2826';
 
@@ -123,6 +124,43 @@ export default function AvailablePage({ breed }) {
             </div>
           )}
         </section>
+
+        {/* Previously Placed */}
+        {!loadingSold && sold.length > 0 && (
+          <section>
+            <div className="flex items-center gap-3 mb-2">
+              <Award className="w-6 h-6 text-plaid-dark" />
+              <h2 className="font-display text-2xl font-bold text-charcoal-600">Previously Placed</h2>
+            </div>
+            <p className="font-body text-sm text-charcoal-300 mb-6">These beauties have found their forever homes. See the quality we produce!</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {sold.map((animal) => {
+                const primaryMedia = animal.animal_media?.find(m => m.is_primary) || animal.animal_media?.[0];
+                return (
+                  <div key={animal.id} className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm opacity-90">
+                    {primaryMedia ? (
+                      <div className="aspect-square relative">
+                        <img src={primaryMedia.url} alt={animal.name} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                          Found their home
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="aspect-square bg-cream-200 flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-cream-300" />
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <p className="font-display font-semibold text-charcoal-600 text-sm">{animal.name}</p>
+                      <p className="text-[10px] text-charcoal-300">{animal.sex}{animal.description ? ` · ${animal.description.substring(0, 40)}${animal.description.length > 40 ? '...' : ''}` : ''}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="bg-charcoal-700 rounded-2xl p-8 md:p-10 text-center plaid-bg overflow-hidden">
           <div className="relative z-10">

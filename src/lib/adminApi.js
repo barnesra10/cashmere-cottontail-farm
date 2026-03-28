@@ -29,6 +29,7 @@ export const getAnimals = (params) => {
 export const createAnimal = (body) => api('/animals', { method: 'POST', body });
 export const updateAnimal = (id, body) => api(`/animals/${id}`, { method: 'PUT', body });
 export const deleteAnimal = (id) => api(`/animals/${id}`, { method: 'DELETE' });
+export const markAsSold = (id) => api(`/animals/${id}/sold`, { method: 'PUT' });
 
 // Media (photos + videos)
 export const uploadMedia = (animalId, file, isPrimary = false) => {
