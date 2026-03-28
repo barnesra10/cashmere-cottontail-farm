@@ -102,7 +102,44 @@ export default function BillOfSale() {
     const price = selectedAnimal.price ? Number(selectedAnimal.price) : 0;
     const billHtml = buildBillHtml(selectedAnimal, buyer, price, today, buyerSig);
 
-    // Send emails via Resend (to buyer + always to Raegon)
+    // Generate PDF in a hidden iframe
+    let pdfBase64 = '';
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+
+      // Create temporary hidden div with the bill HTML
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;background:white;padding:24px';
+      container.innerHTML = billHtml.replace(/<!DOCTYPE.*?<body>/s, '').replace(/<\/body>.*$/s, '');
+      document.body.appendChild(container);
+
+      // Wait for fonts/images to load
+      await new Promise(r => setTimeout(r, 500));
+
+      const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'letter');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      // Handle multi-page if content is tall
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let yOffset = 0;
+      while (yOffset < pdfHeight) {
+        if (yOffset > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfWidth, pdfHeight);
+        yOffset += pageHeight;
+      }
+
+      pdfBase64 = pdf.output('datauristring').split(',')[1];
+    } catch (e) {
+      console.error('PDF generation error:', e);
+    }
+
+    // Send emails via Resend with PDF attachment
     let emailSent = false;
     try {
       const key = sessionStorage.getItem('ccf_admin_key');
@@ -114,6 +151,7 @@ export default function BillOfSale() {
           buyer_name: buyer.name,
           animal_name: selectedAnimal.name,
           html: billHtml,
+          pdf_base64: pdfBase64 || null,
         })
       });
       const emailResult = await emailRes.json();
