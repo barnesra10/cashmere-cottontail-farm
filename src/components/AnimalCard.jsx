@@ -67,14 +67,23 @@ const silhouettes = {
   )
 };
 
+const heroColors = {
+  'valais-blacknose-sheep': 'from-charcoal-600 to-charcoal-700',
+  'pygmy-goats': 'from-sage-500 to-sage-600',
+  'mini-rex-rabbits': 'from-wheat-400 to-wheat-500',
+  'miniature-dachshunds': 'from-charcoal-500 to-charcoal-600',
+  'silkie-chickens': 'from-plaid-mid to-plaid-dark'
+};
+
 export default function AnimalCard({ breed, index }) {
+  const heroColor = heroColors[breed.slug] || 'from-charcoal-600 to-charcoal-700';
   return (
     <Link to={`/${breed.slug}`}
       className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-cream-200 hover:border-sage-200"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Silhouette area */}
-      <div className={`aspect-[4/3] bg-gradient-to-br ${breed.heroColor} flex items-center justify-center p-8 relative overflow-hidden`}>
+      <div className={`aspect-[4/3] bg-gradient-to-br ${heroColor} flex items-center justify-center p-8 relative overflow-hidden`}>
         <div className="absolute inset-0 opacity-5">
           <div className="w-full h-full bg-plaid-pattern" />
         </div>

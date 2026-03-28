@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, Star, Sprout, Award } from 'lucide-react';
 import SEO from '../components/SEO';
 import AnimalCard from '../components/AnimalCard';
-import breeds from '../data/breeds';
+import { useBreeds } from '../hooks/useData';
 
 export default function Home() {
+  const { breeds, loading } = useBreeds();
+
   return (
     <>
       <SEO
@@ -16,11 +18,7 @@ export default function Home() {
       <section className="relative bg-charcoal-700 overflow-hidden">
         <div className="absolute inset-0 plaid-bg opacity-30" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 text-center">
-          <img
-            src="/logo.jpeg"
-            alt="Cashmere Cottontail Farm Logo"
-            className="mx-auto h-40 md:h-56 w-auto rounded-xl shadow-2xl mb-8"
-          />
+          <img src="/logo.jpeg" alt="Cashmere Cottontail Farm Logo" className="mx-auto h-40 md:h-56 w-auto rounded-xl shadow-2xl mb-8" />
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl text-cream-100 font-bold leading-tight">
             Luxury & Boutique<br />
             <span className="font-script text-wheat-400 font-normal">Miniature Animals</span>
@@ -30,12 +28,10 @@ export default function Home() {
             in the pasture — or even your backyard — every animal we breed was <em className="text-wheat-300">born to a purpose</em>.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/about"
-              className="inline-flex items-center gap-2 bg-sage-500 hover:bg-sage-600 text-white font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl">
+            <Link to="/about" className="inline-flex items-center gap-2 bg-sage-500 hover:bg-sage-600 text-white font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl">
               Meet Our Animals <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link to="/contact"
-              className="inline-flex items-center gap-2 bg-transparent border-2 border-cream-200/40 hover:border-cream-200/70 text-cream-100 font-body font-semibold px-8 py-3.5 rounded-full transition-colors">
+            <Link to="/contact" className="inline-flex items-center gap-2 bg-transparent border-2 border-cream-200/40 hover:border-cream-200/70 text-cream-100 font-body font-semibold px-8 py-3.5 rounded-full transition-colors">
               Get In Touch
             </Link>
           </div>
@@ -72,11 +68,17 @@ export default function Home() {
             From the world's cutest sheep to velvet-furred rabbits, explore our carefully bred boutique breeds.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          {breeds.map((breed, i) => (
-            <AnimalCard key={breed.slug} breed={breed} index={i} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {breeds.map((breed, i) => (
+              <AnimalCard key={breed.id} breed={breed} index={i} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Mission */}

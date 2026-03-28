@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, MessageCircle } from 'lucide-react';
 import ChatWidget from './ChatWidget';
-import breeds from '../data/breeds';
+import { useBreeds } from '../hooks/useData';
 
 function NavDropdown({ label, items, mobile, onClose }) {
   const [open, setOpen] = useState(false);
@@ -49,8 +49,9 @@ export default function Layout() {
   const [chatOpen, setChatOpen] = useState(false);
   const location = useLocation();
 
+  const { breeds } = useBreeds();
   const animalItems = breeds.map(b => ({ to: `/${b.slug}`, label: b.name }));
-  const availableItems = breeds.map(b => ({ to: `/${b.slug}/available`, label: `${b.shortName}` }));
+  const availableItems = breeds.map(b => ({ to: `/${b.slug}/available`, label: b.short_name || b.name }));
 
   return (
     <div className="min-h-screen flex flex-col">

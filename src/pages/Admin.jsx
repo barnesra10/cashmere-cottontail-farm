@@ -1,0 +1,325 @@
+import { useState, useEffect } from 'react';
+import { setAdminKey, getAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadPhoto, deletePhoto, setPrimaryPhoto, getContacts, markContactRead } from '../lib/adminApi';
+import { Lock, Plus, Camera, Trash2, Save, LogOut, Image, Eye } from 'lucide-react';
+import SEO from '../components/SEO';
+
+function LoginScreen({ onLogin }) {
+  const [pw, setPw] = useState('');
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const tryLogin = async () => {
+    setLoading(true);
+    setAdminKey(pw);
+    try {
+      await getBreeds(); // test the key
+      onLogin();
+    } catch {
+      setError(true);
+      clearAdminKey();
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="max-w-sm mx-auto px-4 py-24 text-center">
+      <Lock className="w-12 h-12 text-sage-500 mx-auto mb-4" />
+      <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-6">Farm Admin</h1>
+      <input type="password" value={pw} onChange={e => { setPw(e.target.value); setError(false); }}
+        onKeyDown={e => e.key === 'Enter' && tryLogin()}
+        placeholder="Enter admin password"
+        className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-charcoal-600 font-body text-center focus:outline-none focus:ring-2 focus:ring-sage-300" />
+      {error && <p className="text-red-500 text-sm mt-2">Wrong password</p>}
+      <button onClick={tryLogin} disabled={loading}
+        className="mt-4 w-full bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-3 rounded-full transition-colors">
+        {loading ? 'Checking...' : 'Log In'}
+      </button>
+    </div>
+  );
+}
+
+function PhotoUploader({ animalId, existingPhotos = [], onUpdate }) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file) => {
+    setUploading(true);
+    try {
+      await uploadPhoto(animalId, file, existingPhotos.length === 0);
+      onUpdate();
+    } catch (err) { alert('Upload failed: ' + err.message); }
+    setUploading(false);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {existingPhotos.map(p => (
+        <div key={p.id} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-cream-200 group">
+          <img src={p.url} alt="" className="w-full h-full object-cover" />
+          {p.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
+            <button onClick={() => setPrimaryPhoto(p.id, animalId).then(onUpdate)} className="text-white p-1"><Eye className="w-3 h-3" /></button>
+            <button onClick={() => deletePhoto(p.id).then(onUpdate)} className="text-red-300 p-1"><Trash2 className="w-3 h-3" /></button>
+          </div>
+        </div>
+      ))}
+      <label className={`w-20 h-20 rounded-lg border-2 border-dashed border-cream-300 flex items-center justify-center cursor-pointer hover:border-sage-400 transition-colors ${uploading ? 'opacity-50' : ''}`}>
+        {uploading ? <div className="w-5 h-5 border-2 border-sage-200 border-t-sage-500 rounded-full animate-spin" /> : <Camera className="w-6 h-6 text-cream-400" />}
+        <input type="file" accept="image/*" capture="environment" className="hidden" disabled={uploading}
+          onChange={e => e.target.files[0] && handleUpload(e.target.files[0])} />
+      </label>
+    </div>
+  );
+}
+
+function AnimalForm({ breeds, animal, onSave, onCancel }) {
+  const [form, setForm] = useState(animal ? {
+    breed_id: animal.breed_id, name: animal.name, sex: animal.sex, role: animal.role,
+    registration: animal.registration || '', show_quality: animal.show_quality,
+    description: animal.description || '', date_of_birth: animal.date_of_birth || '',
+    sire_name: animal.sire_name || '', dam_name: animal.dam_name || '',
+    price: animal.price || '', status: animal.status, featured: animal.featured
+  } : {
+    breed_id: '', name: '', sex: 'female', role: 'available',
+    registration: '', show_quality: false, description: '',
+    date_of_birth: '', sire_name: '', dam_name: '',
+    price: '', status: 'available', featured: false
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
+
+  const handleSave = async () => {
+    if (!form.breed_id || !form.name) { alert('Breed and name are required'); return; }
+    setSaving(true);
+    const payload = { ...form, price: form.price ? Number(form.price) : null };
+    try {
+      if (animal?.id) { await updateAnimal(animal.id, payload); }
+      else { await createAnimal(payload); }
+      onSave();
+    } catch (err) { alert('Save failed: ' + err.message); }
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-cream-200 p-4 space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="col-span-2">
+          <label className="text-xs font-semibold text-charcoal-400">Breed *</label>
+          <select value={form.breed_id} onChange={e => set('breed_id', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+            <option value="">Select breed...</option>
+            {breeds.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </div>
+        <div className="col-span-2">
+          <label className="text-xs font-semibold text-charcoal-400">Name *</label>
+          <input value={form.name} onChange={e => set('name', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Sex</label>
+          <select value={form.sex} onChange={e => set('sex', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+            <option value="male">Male</option><option value="female">Female</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Role</label>
+          <select value={form.role} onChange={e => set('role', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+            <option value="parent">Breeding Stock</option><option value="available">For Sale</option>
+            <option value="sold">Sold</option><option value="retained">Retained</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Status</label>
+          <select value={form.status} onChange={e => set('status', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+            <option value="available">Available</option><option value="reserved">Reserved</option>
+            <option value="sold">Sold</option><option value="not_for_sale">Not For Sale</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Price</label>
+          <input type="number" value={form.price} onChange={e => set('price', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" placeholder="0.00" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Date of Birth</label>
+          <input type="date" value={form.date_of_birth} onChange={e => set('date_of_birth', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Registration</label>
+          <input value={form.registration} onChange={e => set('registration', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Sire</label>
+          <input value={form.sire_name} onChange={e => set('sire_name', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-charcoal-400">Dam</label>
+          <input value={form.dam_name} onChange={e => set('dam_name', e.target.value)}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+        </div>
+        <div className="col-span-2">
+          <label className="text-xs font-semibold text-charcoal-400">Description</label>
+          <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3}
+            className="w-full mt-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm resize-none" />
+        </div>
+        <div className="col-span-2 flex gap-4">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.show_quality} onChange={e => set('show_quality', e.target.checked)} /> Show Quality</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.featured} onChange={e => set('featured', e.target.checked)} /> Featured</label>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <button onClick={handleSave} disabled={saving}
+          className="flex-1 bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-2.5 rounded-full transition-colors flex items-center justify-center gap-2">
+          <Save className="w-4 h-4" /> {saving ? 'Saving...' : animal?.id ? 'Update' : 'Add Animal'}
+        </button>
+        <button onClick={onCancel} className="px-6 py-2.5 border border-cream-300 rounded-full text-charcoal-400 hover:bg-cream-50 transition-colors">Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+export default function Admin() {
+  const [authed, setAuthed] = useState(false);
+  const [breeds, setBreeds] = useState([]);
+  const [animals, setAnimals] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editAnimal, setEditAnimal] = useState(null);
+  const [filterBreed, setFilterBreed] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+  const [tab, setTab] = useState('animals');
+
+  const loadData = async () => {
+    try {
+      const b = await getBreeds();
+      setBreeds(b);
+      const params = {};
+      if (filterBreed) params.breed_id = filterBreed;
+      if (filterRole) params.role = filterRole;
+      const a = await getAnimals(params);
+      setAnimals(a);
+      const c = await getContacts();
+      setContacts(c);
+    } catch (err) {
+      if (err.message === 'unauthorized') { clearAdminKey(); setAuthed(false); }
+    }
+  };
+
+  useEffect(() => { if (authed) loadData(); }, [authed, filterBreed, filterRole]);
+
+  if (!authed) return (<><SEO title="Admin" description="Farm admin" /><LoginScreen onLogin={() => setAuthed(true)} /></>);
+
+  const breedName = (id) => breeds.find(b => b.id === id)?.short_name || '';
+
+  return (
+    <>
+      <SEO title="Admin" description="Farm admin" />
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="font-display text-xl font-bold text-charcoal-600">Farm Admin</h1>
+          <button onClick={() => { clearAdminKey(); setAuthed(false); }} className="text-charcoal-300 hover:text-charcoal-500 p-2"><LogOut className="w-5 h-5" /></button>
+        </div>
+
+        <div className="flex gap-2 mb-6">
+          {['animals', 'contacts'].map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${tab === t ? 'bg-sage-500 text-white' : 'bg-cream-100 text-charcoal-400 hover:bg-cream-200'}`}>
+              {t === 'animals' ? 'Animals' : `Messages (${contacts.filter(c => !c.read).length})`}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'animals' && (
+          <>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <select value={filterBreed} onChange={e => setFilterBreed(e.target.value)} className="px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+                <option value="">All breeds</option>
+                {breeds.map(b => <option key={b.id} value={b.id}>{b.short_name}</option>)}
+              </select>
+              <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+                <option value="">All roles</option>
+                <option value="parent">Breeding Stock</option><option value="available">For Sale</option>
+                <option value="sold">Sold</option><option value="retained">Retained</option>
+              </select>
+              <button onClick={() => { setEditAnimal(null); setShowForm(true); }}
+                className="ml-auto bg-sage-500 hover:bg-sage-600 text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Add Animal
+              </button>
+            </div>
+
+            {showForm && (
+              <div className="mb-6">
+                <AnimalForm breeds={breeds} animal={editAnimal}
+                  onSave={() => { setShowForm(false); setEditAnimal(null); loadData(); }}
+                  onCancel={() => { setShowForm(false); setEditAnimal(null); }} />
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {animals.map(animal => (
+                <div key={animal.id} className="bg-white rounded-xl border border-cream-200 p-4">
+                  <div className="flex items-start gap-3">
+                    {animal.animal_photos?.[0] ? (
+                      <img src={(animal.animal_photos.find(p => p.is_primary) || animal.animal_photos[0]).url}
+                        alt="" className="w-16 h-16 rounded-lg object-cover" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-cream-100 flex items-center justify-center"><Image className="w-6 h-6 text-cream-300" /></div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-display font-semibold text-charcoal-600">{animal.name}</h3>
+                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${animal.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'}`}>{animal.sex}</span>
+                        <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
+                          animal.role === 'available' ? 'bg-green-100 text-green-700' : animal.role === 'parent' ? 'bg-blue-50 text-blue-600' :
+                          animal.role === 'sold' ? 'bg-charcoal-50 text-charcoal-400' : 'bg-wheat-100 text-wheat-600'
+                        }`}>{animal.role}</span>
+                      </div>
+                      <p className="text-xs text-charcoal-300">{breedName(animal.breed_id)}</p>
+                      {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
+                      <button onClick={async () => {
+                        if (confirm('Delete this animal?')) { await deleteAnimal(animal.id); loadData(); }
+                      }} className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <PhotoUploader animalId={animal.id} existingPhotos={animal.animal_photos || []} onUpdate={loadData} />
+                  </div>
+                </div>
+              ))}
+              {animals.length === 0 && <div className="text-center py-12 text-charcoal-300"><p className="font-body">No animals yet. Tap "Add Animal" to get started!</p></div>}
+            </div>
+          </>
+        )}
+
+        {tab === 'contacts' && (
+          <div className="space-y-3">
+            {contacts.map(c => (
+              <div key={c.id} className={`bg-white rounded-xl border p-4 ${c.read ? 'border-cream-200' : 'border-sage-300 bg-sage-50/30'}`}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-semibold text-charcoal-600 text-sm">{c.name}</p>
+                    <p className="text-xs text-charcoal-300">{c.email} {c.phone && `· ${c.phone}`}</p>
+                    {c.interest && <span className="text-[10px] bg-cream-100 text-charcoal-400 px-2 py-0.5 rounded-full mt-1 inline-block">{c.interest}</span>}
+                  </div>
+                  <span className="text-[10px] text-charcoal-300">{new Date(c.created_at).toLocaleDateString()}</span>
+                </div>
+                <p className="text-sm text-charcoal-500 mt-2 leading-relaxed">{c.message}</p>
+                {!c.read && <button onClick={async () => { await markContactRead(c.id); loadData(); }} className="mt-2 text-xs text-sage-500 font-semibold">Mark as read</button>}
+              </div>
+            ))}
+            {contacts.length === 0 && <p className="text-center py-12 text-charcoal-300 font-body">No messages yet.</p>}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

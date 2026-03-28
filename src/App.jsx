@@ -2,12 +2,12 @@ import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import About from './pages/About';
-import BreedPage from './pages/BreedPage';
-import AvailablePage from './pages/AvailablePage';
+import BreedPageWrapper from './pages/BreedPageWrapper';
+import AvailablePageWrapper from './pages/AvailablePageWrapper';
 import ProducePage from './pages/Produce';
 import Contact from './pages/Contact';
+import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
-import breeds from './data/breeds';
 
 export default function App() {
   return (
@@ -18,12 +18,9 @@ export default function App() {
           <Route path="about" element={<About />} />
           <Route path="produce" element={<ProducePage />} />
           <Route path="contact" element={<Contact />} />
-          {breeds.map(breed => (
-            <Route key={breed.slug} path={breed.slug}>
-              <Route index element={<BreedPage breed={breed} />} />
-              <Route path="available" element={<AvailablePage breed={breed} />} />
-            </Route>
-          ))}
+          <Route path="admin" element={<Admin />} />
+          <Route path=":breedSlug" element={<BreedPageWrapper />} />
+          <Route path=":breedSlug/available" element={<AvailablePageWrapper />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
