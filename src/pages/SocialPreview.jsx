@@ -86,6 +86,7 @@ export default function SocialPreview() {
           role: data.animal?.role || data.role,
           price: data.animal?.price || data.price,
           description: data.animal?.description || data.description,
+          post_type: data.post_type || 'new_listing',
         })
       });
       const result = await res.json();
@@ -157,14 +158,19 @@ export default function SocialPreview() {
       <SEO title="Social Media Preview" description="" />
       <div className="max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center gap-3 mb-6">
-          <a href="/post" className="text-charcoal-300 hover:text-charcoal-500"><ArrowLeft className="w-5 h-5" /></a>
+          <a href={animalData?.post_type ? '/admin' : '/post'} className="text-charcoal-300 hover:text-charcoal-500"><ArrowLeft className="w-5 h-5" /></a>
           <h1 className="font-display text-xl font-bold text-charcoal-600">Social Media Preview</h1>
         </div>
 
         {/* Animal summary */}
         {animalData && (
           <div className="bg-cream-100 rounded-xl p-4 mb-6 border border-cream-200">
-            <p className="font-display font-semibold text-charcoal-600">{animalData.animal?.name || animalData.name}</p>
+            <div className="flex items-center justify-between">
+              <p className="font-display font-semibold text-charcoal-600">{animalData.animal?.name || animalData.name}</p>
+              {animalData.post_type_label && (
+                <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">{animalData.post_type_label}</span>
+              )}
+            </div>
             <p className="text-xs text-charcoal-300">{animalData.breedName || animalData.breed} · {animalData.animal?.sex || animalData.sex} · {mediaUrls.length} media</p>
           </div>
         )}

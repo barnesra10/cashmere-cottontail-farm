@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { setAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
+import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
 import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle } from 'lucide-react';
 import SEO from '../components/SEO';
@@ -228,6 +228,7 @@ export default function Admin() {
   const [editAnimal, setEditAnimal] = useState(null);
   const [filterBreed, setFilterBreed] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [shareAnimal, setShareAnimal] = useState(null);
   const [tab, setTab] = useState('animals');
 
   const loadData = async () => {
@@ -339,19 +340,8 @@ export default function Admin() {
                         {animal.price && <p className="text-sm font-semibold text-sage-600 mt-0.5">${Number(animal.price).toLocaleString()}</p>}
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={async () => {
-                          if (media.length === 0) { alert('Add at least one photo or video before sharing'); return; }
-                          const btn = event.currentTarget;
-                          btn.disabled = true;
-                          try {
-                            const result = await postToSocial(animal.id);
-                            if (result.caption) {
-                              const el = document.getElementById(`caption-${animal.id}`);
-                              if (el) { el.textContent = result.caption; el.parentElement.classList.remove('hidden'); }
-                            }
-                          } catch (err) { alert('Failed: ' + err.message); }
-                          btn.disabled = false;
-                        }} className="p-2 text-charcoal-300 hover:text-blue-500" title="Generate & share to social">
+                        <button onClick={() => setShareAnimal(shareAnimal === animal.id ? null : animal.id)}
+                          className={`p-2 ${shareAnimal === animal.id ? 'text-blue-500' : 'text-charcoal-300 hover:text-blue-500'}`} title="Share to social media">
                           <Share2 className="w-4 h-4" />
                         </button>
                         <button onClick={() => { setEditAnimal(animal); setShowForm(true); }} className="p-2 text-charcoal-300 hover:text-sage-500"><Save className="w-4 h-4" /></button>
@@ -359,19 +349,46 @@ export default function Admin() {
                           className="p-2 text-charcoal-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </div>
-                    {/* Social caption display */}
-                    <div id={`caption-wrap-${animal.id}`} className="hidden mt-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <p id={`caption-${animal.id}`} className="text-xs text-charcoal-600 leading-relaxed" />
-                        <button onClick={() => {
-                          const text = document.getElementById(`caption-${animal.id}`)?.textContent;
-                          if (text) { navigator.clipboard.writeText(text); }
-                        }} className="flex-shrink-0 p-1 text-blue-400 hover:text-blue-600" title="Copy caption">
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
+                    {/* Social post type picker */}
+                    {shareAnimal === animal.id && (
+                      <div className="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-blue-600 mb-2">What type of post?</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { type: 'new_listing', label: '🆕 New Listing', desc: 'Announce a new animal' },
+                            { type: 'still_available', label: '🔄 Still Available', desc: 'Reminder post' },
+                            { type: 'price_update', label: '💰 Price Drop', desc: 'Special pricing' },
+                            { type: 'new_media', label: '📸 New Photo/Video', desc: 'Fresh content' },
+                            { type: 'breeding', label: '🧬 Breeding News', desc: 'Breeding announcement' },
+                            { type: 'sold', label: '🎉 Just Sold', desc: 'Success story' },
+                          ].map(opt => (
+                            <button key={opt.type} onClick={() => {
+                              const breed = breeds.find(b => b.id === animal.breed_id);
+                              sessionStorage.setItem('ccf_social_preview', JSON.stringify({
+                                animal: animal,
+                                animal_id: animal.id,
+                                breedName: breed?.name || '',
+                                name: animal.name,
+                                breed: breed?.slug || '',
+                                sex: animal.sex,
+                                role: animal.role,
+                                price: animal.price,
+                                description: animal.description,
+                                post_type: opt.type,
+                                post_type_label: opt.label,
+                              }));
+                              sessionStorage.setItem('ccf_admin_key', getAdminKey());
+                              window.location.href = '/social';
+                            }}
+                              className="bg-white border border-blue-100 rounded-lg p-2 text-left hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                              <span className="text-sm">{opt.label}</span>
+                              <span className="block text-[10px] text-charcoal-300">{opt.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <button onClick={() => setShareAnimal(null)} className="mt-2 text-[10px] text-charcoal-300 hover:text-charcoal-500">Cancel</button>
                       </div>
-                      <p className="text-[10px] text-blue-400 mt-1">Copy this caption to paste on Facebook, Instagram, TikTok</p>
-                    </div>
+                    )}
                     <div className="mt-3">
                       <MediaUploader animalId={animal.id} existingMedia={media} onUpdate={loadData} />
                     </div>
