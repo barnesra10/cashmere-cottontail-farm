@@ -125,7 +125,13 @@ function AnimalForm({ breeds, animal, onSave, onCancel }) {
   const handleSave = async () => {
     if (!form.breed_id || !form.name) { alert('Breed and name are required'); return; }
     setSaving(true);
-    const payload = { ...form, price: form.price ? Number(form.price) : null };
+    const payload = {
+      ...form,
+      price: form.price ? Number(form.price) : null,
+      date_of_birth: form.date_of_birth || null,
+      sire_name: form.sire_name || null,
+      dam_name: form.dam_name || null,
+    };
     try {
       if (animal?.id) await updateAnimal(animal.id, payload);
       else await createAnimal(payload);
