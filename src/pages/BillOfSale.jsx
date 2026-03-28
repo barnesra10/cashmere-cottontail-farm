@@ -108,86 +108,72 @@ export default function BillOfSale() {
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF('p', 'mm', 'letter');
       const w = doc.internal.pageSize.getWidth();
-      let y = 15;
-      const lm = 20; // left margin
-      const rm = w - 20; // right margin
-      const cw = rm - lm; // content width
+      let y = 18;
+      const lm = 22;
+      const rm = w - 22;
+      const cw = rm - lm;
+      const labelW = 38;
+
+      const addRow = (label, value) => {
+        doc.setFont('times', 'bold'); doc.setFontSize(10);
+        doc.text(label, lm + 2, y);
+        doc.setFont('times', 'normal');
+        const lines = doc.splitTextToSize(String(value || 'N/A'), cw - labelW - 4);
+        doc.text(lines, lm + labelW, y);
+        y += lines.length * 5;
+      };
+
+      const addSection = (title) => {
+        y += 2;
+        doc.setFillColor(240, 238, 233);
+        doc.rect(lm, y - 4, cw, 7, 'F');
+        doc.setFont('times', 'bold'); doc.setFontSize(10);
+        doc.text(title, lm + 2, y); y += 6;
+      };
 
       // Header
-      doc.setFont('times', 'bold'); doc.setFontSize(18);
-      doc.text('LIVESTOCK BILL OF SALE', w / 2, y, { align: 'center' }); y += 7;
+      doc.setFont('times', 'bold'); doc.setFontSize(20);
+      doc.text('LIVESTOCK BILL OF SALE', w / 2, y, { align: 'center' }); y += 6;
       doc.setFont('times', 'normal'); doc.setFontSize(10);
-      doc.text('State of Arkansas', w / 2, y, { align: 'center' }); y += 5;
-      doc.setLineWidth(0.5); doc.line(lm, y, rm, y); y += 5;
+      doc.text('State of Arkansas', w / 2, y, { align: 'center' }); y += 4;
+      doc.setDrawColor(30, 28, 24); doc.setLineWidth(0.6); doc.line(lm, y, rm, y); y += 6;
       doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('Cashmere Cottontail Farm, LLC \u2014 Winslow, Arkansas', w / 2, y, { align: 'center' }); y += 3;
-      doc.setLineWidth(0.2); doc.line(lm, y, rm, y); y += 8;
+      doc.text('Cashmere Cottontail Farm, LLC  —  Winslow, Arkansas', w / 2, y, { align: 'center' }); y += 2;
+      doc.setLineWidth(0.3); doc.line(lm, y, rm, y); y += 6;
 
       // Seller
-      doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('SELLER', lm, y); y += 5;
-      doc.setLineWidth(0.1); doc.line(lm, y, rm, y); y += 5;
-      doc.setFont('times', 'normal'); doc.setFontSize(10);
-      const sellerLines = [
-        ['Business:', 'Cashmere Cottontail Farm, LLC'],
-        ['Representative:', 'Raegon Barnes'],
-        ['Address:', '17799 Bethlehem Rd, Winslow, AR 72762'],
-        ['Phone:', '(479) 531-0849'],
-      ];
-      sellerLines.forEach(([l, v]) => { doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5; });
-      y += 3;
+      addSection('SELLER');
+      addRow('Business:', 'Cashmere Cottontail Farm, LLC');
+      addRow('Representative:', 'Raegon Barnes');
+      addRow('Address:', '17799 Bethlehem Rd, Winslow, AR 72762');
+      addRow('Phone:', '(479) 531-0849');
 
       // Buyer
-      doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('BUYER', lm, y); y += 5;
-      doc.line(lm, y, rm, y); y += 5;
-      doc.setFont('times', 'normal'); doc.setFontSize(10);
+      addSection('BUYER');
       const buyerAddr = [buyer.address, buyer.city, buyer.state, buyer.zip].filter(Boolean).join(', ');
-      const buyerLines = [
-        ['Name:', buyer.name],
-        ['Address:', buyerAddr || 'N/A'],
-        ['Phone:', buyer.phone || 'N/A'],
-        ['Email:', buyer.email || 'N/A'],
-      ];
-      buyerLines.forEach(([l, v]) => { doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5; });
-      y += 3;
+      addRow('Name:', buyer.name);
+      addRow('Address:', buyerAddr || 'N/A');
+      addRow('Phone:', buyer.phone || 'N/A');
+      addRow('Email:', buyer.email || 'N/A');
 
       // Animal
-      doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('ANIMAL DESCRIPTION', lm, y); y += 5;
-      doc.line(lm, y, rm, y); y += 5;
-      doc.setFontSize(10);
-      const animalLines = [
-        ['Name:', selectedAnimal.name],
-        ['Description:', selectedAnimal.description || 'N/A'],
-        ['Sex:', selectedAnimal.sex],
-        ['Date of Birth:', selectedAnimal.date_of_birth || 'N/A'],
-        ['Registration #:', selectedAnimal.registration || 'N/A'],
-        ['Sire:', selectedAnimal.sire_name || 'N/A'],
-        ['Dam:', selectedAnimal.dam_name || 'N/A'],
-      ];
-      animalLines.forEach(([l, v]) => {
-        doc.setFont('times', 'bold'); doc.text(l, lm, y);
-        doc.setFont('times', 'normal');
-        const lines = doc.splitTextToSize(String(v), cw - 35);
-        doc.text(lines, lm + 32, y); y += lines.length * 4.5;
-      });
-      y += 3;
+      addSection('ANIMAL DESCRIPTION');
+      addRow('Name:', selectedAnimal.name);
+      addRow('Description:', selectedAnimal.description || 'N/A');
+      addRow('Sex:', selectedAnimal.sex);
+      addRow('Date of Birth:', selectedAnimal.date_of_birth || 'N/A');
+      addRow('Registration #:', selectedAnimal.registration || 'N/A');
+      addRow('Sire:', selectedAnimal.sire_name || 'N/A');
+      addRow('Dam:', selectedAnimal.dam_name || 'N/A');
 
       // Transaction
-      doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('TRANSACTION', lm, y); y += 5;
-      doc.line(lm, y, rm, y); y += 5;
-      doc.setFontSize(10);
-      [['Sale Date:', today], ['Sale Price:', '$' + price.toLocaleString() + '.00'], ['Payment:', 'Paid in full at time of sale']].forEach(([l, v]) => {
-        doc.setFont('times', 'bold'); doc.text(l, lm, y); doc.setFont('times', 'normal'); doc.text(v, lm + 32, y); y += 5;
-      });
-      y += 3;
+      addSection('TRANSACTION');
+      addRow('Sale Date:', today);
+      addRow('Sale Price:', '$' + price.toLocaleString() + '.00');
+      addRow('Payment:', 'Paid in full at time of sale');
 
       // Terms
-      doc.setFont('times', 'bold'); doc.setFontSize(11);
-      doc.text('TERMS & CONDITIONS', lm, y); y += 5;
-      doc.line(lm, y, rm, y); y += 5;
+      addSection('TERMS & CONDITIONS');
       doc.setFont('times', 'normal'); doc.setFontSize(8.5);
       const terms = [
         '1. Transfer of Ownership. Seller hereby transfers to Buyer all right, title, and interest in the above-described animal.',
