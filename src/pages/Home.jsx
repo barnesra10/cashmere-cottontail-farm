@@ -28,9 +28,30 @@ export default function Home() {
             in the pasture — or even your backyard — every animal we breed was <em className="text-wheat-300">born to a purpose</em>.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#animals" className="inline-flex items-center gap-2 text-charcoal-700 font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl" style={{ backgroundColor: '#c0b8aa' }}>
+            <button onClick={() => {
+              const target = document.getElementById('animals');
+              if (!target) return;
+              const start = window.scrollY;
+              const end = target.getBoundingClientRect().top + window.scrollY - 80;
+              const distance = end - start;
+              const duration = 1800; // 1.8 seconds — slow and elegant
+              let startTime = null;
+              function ease(t) {
+                // Custom ease-in-out cubic for a luxurious feel
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+              }
+              function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                window.scrollTo(0, start + distance * ease(progress));
+                if (progress < 1) requestAnimationFrame(step);
+              }
+              requestAnimationFrame(step);
+            }}
+              className="inline-flex items-center gap-2 text-charcoal-700 font-body font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg hover:shadow-xl cursor-pointer" style={{ backgroundColor: '#c0b8aa' }}>
               Meet Our Animals <ArrowRight className="w-4 h-4" />
-            </a>
+            </button>
             <Link to="/contact" className="inline-flex items-center gap-2 bg-transparent border-2 border-cream-200/40 hover:border-cream-200/70 text-cream-100 font-body font-semibold px-8 py-3.5 rounded-full transition-colors">
               Get In Touch
             </Link>
