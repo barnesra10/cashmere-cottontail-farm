@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
+import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
 import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle } from 'lucide-react';
 import SEO from '../components/SEO';
 
@@ -9,7 +10,7 @@ function LoginScreen({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const tryLogin = async () => {
     setLoading(true); setAdminKey(pw);
-    try { await getBreeds(); onLogin(); }
+    try { await getBreeds(); saveSession(pw); onLogin(); }
     catch { setError(true); clearAdminKey(); }
     setLoading(false);
   };
@@ -238,9 +239,24 @@ export default function Admin() {
       setAnimals(await getAnimals(params));
       setContacts(await getContacts());
     } catch (err) {
-      if (err.message === 'unauthorized') { clearAdminKey(); setAuthed(false); }
+      if (err.message === 'unauthorized') { clearAdminKey(); clearSession(); setAuthed(false); }
     }
   };
+
+  // Check for cached session on mount
+  useEffect(() => {
+    const cachedKey = getSavedSession();
+    if (cachedKey) {
+      setAdminKey(cachedKey);
+      getBreeds().then(b => {
+        setBreeds(b);
+        setAuthed(true);
+      }).catch(() => {
+        clearSession();
+        clearAdminKey();
+      });
+    }
+  }, []);
 
   useEffect(() => { if (authed) loadData(); }, [authed, filterBreed, filterRole]);
 
@@ -254,7 +270,7 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-xl font-bold text-charcoal-600">Farm Admin</h1>
-          <button onClick={() => { clearAdminKey(); setAuthed(false); }} className="text-charcoal-300 hover:text-charcoal-500 p-2"><LogOut className="w-5 h-5" /></button>
+          <button onClick={() => { clearAdminKey(); clearSession(); setAuthed(false); }} className="text-charcoal-300 hover:text-charcoal-500 p-2"><LogOut className="w-5 h-5" /></button>
         </div>
 
         <div className="flex gap-2 mb-6">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Camera, Video, Send, CheckCircle, Plus, X, Lock } from 'lucide-react';
 import { setAdminKey, clearAdminKey, getBreeds } from '../lib/adminApi';
+import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
 import SEO from '../components/SEO';
 
 const EDGE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/quick-post';
@@ -21,11 +22,28 @@ export default function QuickPost() {
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
+  // Check for cached session on mount
+  useEffect(() => {
+    const cachedKey = getSavedSession();
+    if (cachedKey) {
+      setPw(cachedKey);
+      setAdminKey(cachedKey);
+      getBreeds().then(b => {
+        setBreeds(b);
+        setAuthed(true);
+      }).catch(() => {
+        clearSession();
+        clearAdminKey();
+      });
+    }
+  }, []);
+
   const tryLogin = async () => {
     setAdminKey(pw);
     try { 
       const b = await getBreeds(); 
       setBreeds(b);
+      saveSession(pw);
       setAuthed(true); 
     } catch { 
       setLoginError(true); 
