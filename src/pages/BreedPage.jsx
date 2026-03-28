@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Heart, Star, Shield, Camera } from 'lucide-react';
 import SEO from '../components/SEO';
+import MediaGallery from '../components/MediaGallery';
 import { useAnimals } from '../hooks/useData';
 
 const heroColors = {
@@ -17,13 +18,10 @@ export default function BreedPage({ breed }) {
 
   return (
     <>
-      <SEO
-        title={breed.name}
+      <SEO title={breed.name}
         description={`${breed.tagline} Learn about our ${breed.name} breeding program at Cashmere Cottontail Farm.`}
-        path={`/${breed.slug}`}
-      />
+        path={`/${breed.slug}`} />
 
-      {/* Hero */}
       <section className={`bg-gradient-to-br ${heroColor} plaid-bg text-white`}>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
           <span className="text-6xl mb-4 block">{breed.emoji}</span>
@@ -36,7 +34,6 @@ export default function BreedPage({ breed }) {
         </div>
       </section>
 
-      {/* Description */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-4">
@@ -50,7 +47,6 @@ export default function BreedPage({ breed }) {
         </div>
       </section>
 
-      {/* Breed Standard */}
       <section className="bg-cream-200/30 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-start gap-4">
@@ -63,7 +59,6 @@ export default function BreedPage({ breed }) {
         </div>
       </section>
 
-      {/* Parents */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <h2 className="font-display text-2xl font-bold text-charcoal-600 text-center mb-4">
           Our <span className="font-script text-sage-500 font-normal">Breeding Stock</span>
@@ -78,58 +73,46 @@ export default function BreedPage({ breed }) {
           </div>
         ) : parents.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {parents.map((parent) => {
-              const primaryPhoto = parent.animal_media?.find(p => p.is_primary) || parent.animal_media?.[0];
-              return (
-                <div key={parent.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
-                  {primaryPhoto ? (
-                    <div className="aspect-square bg-cream-100 img-hover-zoom">
-                      {primaryPhoto.media_type === "video" ? (<video src={primaryPhoto.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />) : (<img src={primaryPhoto.url} alt={parent.name} className="w-full h-full object-cover" />)}
-                    </div>
-                  ) : (
-                    <div className="aspect-square bg-cream-100 flex items-center justify-center">
-                      <Camera className="w-12 h-12 text-cream-300" />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                        parent.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                      }`}>
-                        {parent.sex === 'male' ? 'Sire' : 'Dam'}
-                      </span>
-                      {parent.show_quality && <Star className="w-4 h-4 text-wheat-500" />}
-                    </div>
-                    <h3 className="font-display text-lg font-semibold text-charcoal-600">{parent.name}</h3>
-                    {parent.registration && <p className="text-xs text-charcoal-300 font-body mt-0.5">Reg: {parent.registration}</p>}
-                    {parent.description && <p className="text-sm text-charcoal-400 font-body mt-2 leading-relaxed">{parent.description}</p>}
+            {parents.map((parent) => (
+              <div key={parent.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
+                {parent.animal_media?.length > 0 ? (
+                  <MediaGallery media={parent.animal_media} name={parent.name} />
+                ) : (
+                  <div className="aspect-square bg-cream-100 flex items-center justify-center">
+                    <Camera className="w-12 h-12 text-cream-300" />
                   </div>
+                )}
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      parent.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                    }`}>{parent.sex === 'male' ? 'Sire' : 'Dam'}</span>
+                    {parent.show_quality && <Star className="w-4 h-4 text-wheat-500" />}
+                  </div>
+                  <h3 className="font-display text-lg font-semibold text-charcoal-600">{parent.name}</h3>
+                  {parent.registration && <p className="text-xs text-charcoal-300 font-body mt-0.5">Reg: {parent.registration}</p>}
+                  {parent.description && <p className="text-sm text-charcoal-400 font-body mt-2 leading-relaxed">{parent.description}</p>}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="text-center bg-cream-100 rounded-2xl p-12 border border-cream-200">
             <Camera className="w-12 h-12 text-cream-300 mx-auto mb-4" />
             <p className="font-body text-charcoal-400">Breeding stock profiles coming soon!</p>
-            <p className="font-body text-sm text-charcoal-300 mt-1">Check back for photos, pedigrees, and details on our sires and dams.</p>
+            <p className="font-body text-sm text-charcoal-300 mt-1">Check back for photos, pedigrees, and details.</p>
           </div>
         )}
       </section>
 
-      {/* CTA */}
       <section className="bg-sage-500 plaid-bg text-white">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
           <Heart className="w-8 h-8 mx-auto mb-3 text-white/70" />
           <h2 className="font-display text-2xl font-bold mb-3">Interested in a {breed.short_name}?</h2>
           <p className="font-body text-white/80 mb-6">See what babies are coming up or currently available.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to={`/${breed.slug}/available`} className="bg-white text-sage-600 hover:bg-cream-100 font-semibold px-8 py-3 rounded-full transition-colors">
-              View Available
-            </Link>
-            <Link to="/contact" className="border-2 border-white/40 hover:border-white/70 text-white font-semibold px-8 py-3 rounded-full transition-colors">
-              Contact Us
-            </Link>
+            <Link to={`/${breed.slug}/available`} className="bg-white text-sage-600 hover:bg-cream-100 font-semibold px-8 py-3 rounded-full transition-colors">View Available</Link>
+            <Link to="/contact" className="border-2 border-white/40 hover:border-white/70 text-white font-semibold px-8 py-3 rounded-full transition-colors">Contact Us</Link>
           </div>
         </div>
       </section>

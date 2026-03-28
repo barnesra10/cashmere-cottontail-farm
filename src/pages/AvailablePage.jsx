@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Camera, Bell, Heart } from 'lucide-react';
 import SEO from '../components/SEO';
+import MediaGallery from '../components/MediaGallery';
 import { useAnimals, useLitters } from '../hooks/useData';
 
 const heroColors = {
@@ -18,11 +19,9 @@ export default function AvailablePage({ breed }) {
 
   return (
     <>
-      <SEO
-        title={`Available ${breed.short_name}`}
+      <SEO title={`Available ${breed.short_name}`}
         description={`See available and upcoming ${breed.name} babies at Cashmere Cottontail Farm.`}
-        path={`/${breed.slug}/available`}
-      />
+        path={`/${breed.slug}/available`} />
 
       <section className={`bg-gradient-to-br ${heroColor} plaid-bg text-white`}>
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -35,7 +34,6 @@ export default function AvailablePage({ breed }) {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
-        {/* Currently Available */}
         <section>
           <div className="flex items-center gap-3 mb-6">
             <Heart className="w-6 h-6 text-sage-500" />
@@ -48,70 +46,55 @@ export default function AvailablePage({ breed }) {
             </div>
           ) : available.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {available.map((animal) => {
-                const primaryPhoto = animal.animal_media?.find(p => p.is_primary) || animal.animal_media?.[0];
-                return (
-                  <div key={animal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
-                    {primaryPhoto ? (
-                      <div className="aspect-square bg-cream-100 img-hover-zoom">
-                        {primaryPhoto.media_type === "video" ? (<video src={primaryPhoto.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />) : (<img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />)}
-                      </div>
-                    ) : (
-                      <div className="aspect-square bg-cream-100 flex items-center justify-center">
-                        <Camera className="w-12 h-12 text-cream-300" />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          animal.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
-                        }`}>{animal.sex}</span>
-                        {animal.status && (
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            animal.status === 'available' ? 'bg-green-100 text-green-700' :
-                            animal.status === 'reserved' ? 'bg-wheat-100 text-wheat-500' :
-                            'bg-charcoal-50 text-charcoal-400'
-                          }`}>{animal.status}</span>
-                        )}
-                      </div>
-                      <h3 className="font-display text-lg font-semibold text-charcoal-600">{animal.name}</h3>
-                      {animal.date_of_birth && <p className="text-xs text-charcoal-300 font-body">Born {new Date(animal.date_of_birth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>}
-                      {animal.sire_name && animal.dam_name && (
-                        <p className="text-xs text-charcoal-300 font-body mt-0.5">{animal.sire_name} × {animal.dam_name}</p>
-                      )}
-                      {animal.description && <p className="text-sm text-charcoal-400 font-body mt-2 leading-relaxed">{animal.description}</p>}
-                      {animal.price && <p className="mt-3 font-display text-lg font-bold text-sage-600">${Number(animal.price).toLocaleString()}</p>}
-                      <Link to="/contact" className="mt-3 block text-center bg-sage-500 hover:bg-sage-600 text-white text-sm font-semibold py-2 rounded-full transition-colors">
-                        Inquire
-                      </Link>
+              {available.map((animal) => (
+                <div key={animal.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-cream-200 hover:shadow-lg transition-shadow">
+                  {animal.animal_media?.length > 0 ? (
+                    <MediaGallery media={animal.animal_media} name={animal.name} />
+                  ) : (
+                    <div className="aspect-square bg-cream-100 flex items-center justify-center">
+                      <Camera className="w-12 h-12 text-cream-300" />
                     </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                        animal.sex === 'male' ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700'
+                      }`}>{animal.sex}</span>
+                      {animal.status && (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          animal.status === 'available' ? 'bg-green-100 text-green-700' :
+                          animal.status === 'reserved' ? 'bg-wheat-100 text-wheat-500' :
+                          'bg-charcoal-50 text-charcoal-400'
+                        }`}>{animal.status}</span>
+                      )}
+                    </div>
+                    <h3 className="font-display text-lg font-semibold text-charcoal-600">{animal.name}</h3>
+                    {animal.date_of_birth && <p className="text-xs text-charcoal-300 font-body">Born {new Date(animal.date_of_birth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>}
+                    {animal.sire_name && animal.dam_name && <p className="text-xs text-charcoal-300 font-body mt-0.5">{animal.sire_name} × {animal.dam_name}</p>}
+                    {animal.description && <p className="text-sm text-charcoal-400 font-body mt-2 leading-relaxed">{animal.description}</p>}
+                    {animal.price && <p className="mt-3 font-display text-lg font-bold text-sage-600">${Number(animal.price).toLocaleString()}</p>}
+                    <Link to="/contact" className="mt-3 block text-center bg-sage-500 hover:bg-sage-600 text-white text-sm font-semibold py-2 rounded-full transition-colors">Inquire</Link>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="bg-cream-100 rounded-2xl p-10 border border-cream-200 text-center">
               <Heart className="w-10 h-10 text-cream-300 mx-auto mb-3" />
               <p className="font-display text-lg text-charcoal-500 mb-1">No babies available right now</p>
               <p className="font-body text-sm text-charcoal-300">Check back soon or contact us to get on our waiting list!</p>
-              <Link to="/contact" className="inline-block mt-4 bg-sage-500 hover:bg-sage-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors">
-                Join Waiting List
-              </Link>
+              <Link to="/contact" className="inline-block mt-4 bg-sage-500 hover:bg-sage-600 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors">Join Waiting List</Link>
             </div>
           )}
         </section>
 
-        {/* Upcoming Litters */}
         <section>
           <div className="flex items-center gap-3 mb-6">
             <Calendar className="w-6 h-6 text-wheat-500" />
             <h2 className="font-display text-2xl font-bold text-charcoal-600">Upcoming Litters</h2>
           </div>
-
           {loadingLitters ? (
-            <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-sage-200 border-t-sage-500 rounded-full animate-spin" />
-            </div>
+            <div className="flex justify-center py-12"><div className="w-8 h-8 border-4 border-sage-200 border-t-sage-500 rounded-full animate-spin" /></div>
           ) : litters.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {litters.map((litter) => (
@@ -121,9 +104,7 @@ export default function AvailablePage({ breed }) {
                       <h3 className="font-display text-lg font-semibold text-charcoal-600">{litter.title}</h3>
                       <p className="text-sm text-charcoal-300 font-body">{litter.sire_name} × {litter.dam_name}</p>
                     </div>
-                    <span className="bg-wheat-100 text-wheat-500 text-xs font-bold px-3 py-1 rounded-full">
-                      {litter.expected_date}
-                    </span>
+                    <span className="bg-wheat-100 text-wheat-500 text-xs font-bold px-3 py-1 rounded-full">{litter.expected_date}</span>
                   </div>
                   {litter.description && <p className="text-sm text-charcoal-400 font-body leading-relaxed">{litter.description}</p>}
                   {litter.spots_left !== null && (
@@ -143,17 +124,12 @@ export default function AvailablePage({ breed }) {
           )}
         </section>
 
-        {/* CTA */}
         <section className="bg-charcoal-700 rounded-2xl p-8 md:p-10 text-center plaid-bg overflow-hidden">
           <div className="relative z-10">
             <Bell className="w-8 h-8 text-wheat-400 mx-auto mb-3" />
             <h3 className="font-display text-xl font-bold text-cream-100 mb-2">Don't Miss Out</h3>
-            <p className="font-body text-cream-300 text-sm mb-5 max-w-md mx-auto">
-              Get notified when new {breed.short_name} babies are available.
-            </p>
-            <Link to="/contact" className="inline-block bg-sage-500 hover:bg-sage-600 text-white font-semibold px-8 py-3 rounded-full transition-colors">
-              Get Notified
-            </Link>
+            <p className="font-body text-cream-300 text-sm mb-5 max-w-md mx-auto">Get notified when new {breed.short_name} babies are available.</p>
+            <Link to="/contact" className="inline-block bg-sage-500 hover:bg-sage-600 text-white font-semibold px-8 py-3 rounded-full transition-colors">Get Notified</Link>
           </div>
         </section>
       </div>
