@@ -14,7 +14,7 @@ const breedBgColors = {
 
 export default function BreedPage({ breed }) {
   const { animals: parents, loading } = useAnimals(breed.id, 'parent');
-  const heroColor = heroColors[breed.slug] || '#2c2826';
+  const heroColor = breedBgColors[breed.slug] || '#2c2826';
 
   return (
     <>

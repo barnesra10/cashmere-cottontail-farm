@@ -15,7 +15,7 @@ const breedBgColors = {
 export default function AvailablePage({ breed }) {
   const { animals: available, loading: loadingAnimals } = useAnimals(breed.id, 'available');
   const { litters, loading: loadingLitters } = useLitters(breed.id);
-  const heroColor = heroColors[breed.slug] || '#2c2826';
+  const heroColor = breedBgColors[breed.slug] || '#2c2826';
 
   return (
     <>
