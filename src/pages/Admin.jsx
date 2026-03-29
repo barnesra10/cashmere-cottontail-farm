@@ -33,8 +33,8 @@ function LoginScreen({ onLogin }) {
 function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState('');
-  const [dragIdx, setDragIdx] = useState(null);
-  const [overIdx, setOverIdx] = useState(null);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(null);
 
   const handleUpload = async (file) => {
     setUploading(true);
@@ -48,73 +48,69 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
     setProgress('');
   };
 
-  const handleDragEnd = async () => {
-    if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
+  const handleTapToSwap = async (tapIdx) => {
+    if (selectedIdx === null) {
+      setSelectedIdx(tapIdx);
+    } else if (selectedIdx === tapIdx) {
+      setSelectedIdx(null);
+    } else {
       const key = sessionStorage.getItem('ccf_admin_key');
       const api = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
       try {
         await fetch(`${api}/media/reorder`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
-          body: JSON.stringify({ media_id_a: existingMedia[dragIdx].id, media_id_b: existingMedia[overIdx].id })
+          body: JSON.stringify({ media_id_a: existingMedia[selectedIdx].id, media_id_b: existingMedia[tapIdx].id })
         });
         onUpdate();
       } catch (e) { console.error(e); }
+      setSelectedIdx(null);
+      setReorderMode(false);
     }
-    setDragIdx(null);
-    setOverIdx(null);
   };
-
-  // Touch drag support
-  const touchStartRef = { current: null };
-  const handleTouchStart = (e, idx) => {
-    touchStartRef.current = { idx, x: e.touches[0].clientX, y: e.touches[0].clientY };
-    setDragIdx(idx);
-  };
-  const handleTouchMove = (e) => {
-    if (dragIdx === null) return;
-    const touch = e.touches[0];
-    // Find which media element we're over
-    const els = document.querySelectorAll(`[data-media-animal="${animalId}"]`);
-    els.forEach((el, i) => {
-      const rect = el.getBoundingClientRect();
-      if (touch.clientX >= rect.left && touch.clientX <= rect.right && touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-        setOverIdx(i);
-      }
-    });
-  };
-  const handleTouchEnd = () => handleDragEnd();
 
   const photos = existingMedia.filter(m => m.media_type === 'photo');
   const videos = existingMedia.filter(m => m.media_type === 'video');
 
   return (
-    <div className="space-y-2" onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+    <div className="space-y-2">
+      {/* Reorder toggle */}
+      {existingMedia.length > 1 && (
+        <button onClick={() => { setReorderMode(!reorderMode); setSelectedIdx(null); }}
+          className={`text-[10px] font-semibold px-3 py-1 rounded-full ${reorderMode ? 'bg-sage-500 text-white' : 'bg-cream-100 text-charcoal-400 border border-cream-200'}`}>
+          {reorderMode ? '✓ Done Reordering' : '↔ Reorder'}
+        </button>
+      )}
+      {reorderMode && (
+        <p className="text-[10px] text-sage-500">{selectedIdx !== null ? 'Now tap where you want to move it' : 'Tap a photo to select it, then tap its new position'}</p>
+      )}
       <div className="flex flex-wrap gap-2">
         {existingMedia.map((m, i) => (
-          <div key={m.id} data-media-animal={animalId}
-            draggable onDragStart={() => setDragIdx(i)} onDragOver={(e) => { e.preventDefault(); setOverIdx(i); }} onDrop={handleDragEnd}
-            onTouchStart={(e) => handleTouchStart(e, i)}
-            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 group cursor-grab active:cursor-grabbing transition-all ${
-              dragIdx === i ? 'opacity-50 scale-95 border-sage-400' :
-              overIdx === i && dragIdx !== null ? 'border-sage-500 ring-2 ring-sage-300' : 'border-cream-200'
+          <div key={m.id}
+            onClick={() => reorderMode && handleTapToSwap(i)}
+            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 group transition-all ${
+              reorderMode && selectedIdx === i ? 'border-sage-500 ring-2 ring-sage-300 scale-95' :
+              reorderMode ? 'border-cream-300 cursor-pointer' : 'border-cream-200'
             }`}>
             {m.media_type === 'video' ? (
               <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
                 <Play className="w-6 h-6 text-white/80" />
               </div>
             ) : (
-              <img src={m.url} alt="" className="w-full h-full object-cover pointer-events-none" />
+              <img src={m.url} alt="" className="w-full h-full object-cover" />
             )}
             {m.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
             {m.media_type === 'video' && <span className="absolute bottom-0.5 left-0.5 bg-charcoal-700 text-white text-[8px] px-1 rounded">Video</span>}
-            {/* Action overlay - only set primary + delete */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
-              {m.media_type === 'photo' && (
-                <button onClick={(e) => { e.stopPropagation(); setPrimaryMedia(m.id, animalId).then(onUpdate); }} className="text-white p-1 bg-black/30 rounded" title="Set as primary"><Eye className="w-3.5 h-3.5" /></button>
-              )}
-              <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this?')) deleteMedia(m.id).then(onUpdate); }} className="text-red-300 p-1 bg-black/30 rounded" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
-            </div>
+            {reorderMode && <span className="absolute top-0.5 right-0.5 bg-charcoal-700/80 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full">{i + 1}</span>}
+            {/* Action overlay — only when NOT reordering */}
+            {!reorderMode && (
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                {m.media_type === 'photo' && (
+                  <button onClick={() => setPrimaryMedia(m.id, animalId).then(onUpdate)} className="text-white p-1.5 bg-black/30 rounded-lg" title="Set as primary"><Eye className="w-3.5 h-3.5" /></button>
+                )}
+                <button onClick={() => { if (confirm('Delete this?')) deleteMedia(m.id).then(onUpdate); }} className="text-red-300 p-1.5 bg-black/30 rounded-lg" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+            )}
           </div>
         ))}
 
