@@ -69,6 +69,7 @@ export default function BillOfSale() {
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const set = (k, v) => setBuyer(prev => ({ ...prev, [k]: v }));
 
@@ -327,16 +328,37 @@ export default function BillOfSale() {
             <input placeholder="Phone" value={buyer.phone} onChange={e => set('phone', e.target.value)} type="tel" className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
           </div>
 
-          <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Buyer Signature</h2>
+          {/* Terms & Conditions */}
           <div className="mb-6">
-            <SignaturePad label="Sign below with your finger" onSave={setBuyerSig} saved={!!buyerSig} />
+            <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Terms & Conditions</h2>
+            <div className="bg-cream-50 border border-cream-200 rounded-xl p-4 max-h-64 overflow-y-auto mb-3 text-xs text-charcoal-500 leading-relaxed space-y-2">
+              <p><strong>1. Transfer of Ownership.</strong> Seller hereby transfers and conveys to Buyer all right, title, and interest in the above-described animal in exchange for the purchase price stated above.</p>
+              <p><strong>2. AS-IS Sale.</strong> The animal is sold "AS-IS" without any express or implied warranties regarding health, condition, temperament, or fitness for any particular purpose, except as separately agreed in writing.</p>
+              <p><strong>3. Health.</strong> Seller represents that to the best of their knowledge, the animal is in good health at the time of sale. Buyer is encouraged to have the animal examined by a licensed veterinarian within 72 hours.</p>
+              <p><strong>4. Assumption of Risk.</strong> Upon execution of this Bill of Sale and transfer of possession, Buyer assumes all risk and responsibility for the care, feeding, housing, and well-being of the animal.</p>
+              <p><strong>5. All Sales Final.</strong> No refunds or exchanges will be provided.</p>
+              <p><strong>6. No Resale for Slaughter.</strong> Buyer agrees that the animal is being purchased as a pet, breeding animal, or show animal, and shall not be resold for slaughter or inhumane purposes.</p>
+              <p><strong>7. Governing Law.</strong> This Bill of Sale shall be governed by the laws of the State of Arkansas.</p>
+              <p><strong>8. Entire Agreement.</strong> This document constitutes the entire agreement between the parties regarding this transaction.</p>
+            </div>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 w-5 h-5 rounded border-cream-300 text-sage-500 focus:ring-sage-500" />
+              <span className="text-sm text-charcoal-500">I have read and agree to the above Terms & Conditions</span>
+            </label>
           </div>
 
-          <button onClick={submit} disabled={sending || !buyer.name || !buyerSig}
+          <h2 className="text-sm font-semibold text-charcoal-500 mb-3">Buyer Signature</h2>
+          <div className={`mb-6 ${!termsAccepted ? 'opacity-40 pointer-events-none' : ''}`}>
+            <SignaturePad label="Sign below with your finger" onSave={setBuyerSig} saved={!!buyerSig} />
+            {!termsAccepted && <p className="text-[10px] text-center text-charcoal-300 mt-1">Please accept the terms above to sign</p>}
+          </div>
+
+          <button onClick={submit} disabled={sending || !buyer.name || !buyerSig || !termsAccepted}
             className="w-full bg-sage-500 hover:bg-sage-600 disabled:opacity-40 text-white font-semibold py-4 rounded-full flex items-center justify-center gap-2 text-lg shadow-lg">
             {sending ? <><Loader className="w-5 h-5 animate-spin" /> Processing...</> : <><Send className="w-5 h-5" /> Complete Sale</>}
           </button>
-          <p className="text-[10px] text-charcoal-300 text-center mt-3">Opens bill of sale for printing/sharing{buyer.email ? ' and drafts an email' : ''}. Marks animal as sold.</p>
+          <p className="text-[10px] text-charcoal-300 text-center mt-3">Emails bill of sale to buyer and seller. Marks animal as sold.</p>
         </>
       )}
     </div></>
