@@ -11,15 +11,16 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
     return (
       <div>
         <button onClick={() => setOpen(!open)} className="flex items-center gap-1 w-full py-2 font-body text-charcoal-600 hover:text-sage-500 transition-colors">
-          {label} {highlight && <span className="w-2 h-2 rounded-full bg-sage-500 inline-block" />} <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+          {label} <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
         {open && (
           <div className="pl-4 space-y-1">
             {items.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
-                className={({ isActive }) => `block py-1.5 text-sm flex items-center gap-2 ${isActive ? 'text-sage-500 font-semibold' : item.count > 0 ? 'text-sage-600 font-medium' : 'text-charcoal-400 hover:text-charcoal-600'}`}>
-                {item.label}
-                {item.count > 0 && <span className="bg-sage-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
+                className={({ isActive }) => `block py-1.5 text-sm flex items-center gap-2 ${isActive ? 'font-semibold' : ''}`}
+                style={{ color: isActive => item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>
+                <span style={{ color: item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>{item.label}</span>
+                {item.count > 0 && <span style={{ backgroundColor: '#2c2826' }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
               </NavLink>
             ))}
           </div>
@@ -29,16 +30,18 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
   }
   return (
     <div className="relative group" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button className={`flex items-center gap-1 font-body text-sm tracking-wide transition-colors uppercase ${highlight ? 'text-sage-600 font-semibold' : 'text-charcoal-500 hover:text-charcoal-700'}`}>
-        {label} {highlight && <span className="w-2 h-2 rounded-full bg-sage-500 inline-block" />} <ChevronDown className="w-3.5 h-3.5" />
+      <button className="flex items-center gap-1 font-body text-sm tracking-wide transition-colors uppercase"
+        style={{ color: highlight ? '#2c2826' : '#9A9085', fontWeight: highlight ? 600 : 400 }}>
+        {label} <ChevronDown className="w-3.5 h-3.5" />
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg border border-cream-200 py-2 min-w-[200px] z-50">
           {items.map(item => (
             <NavLink key={item.to} to={item.to}
-              className={({ isActive }) => `block px-4 py-2 text-sm flex items-center justify-between ${isActive ? 'text-sage-500 bg-sage-50 font-semibold' : item.count > 0 ? 'text-sage-600 font-medium hover:bg-cream-100' : 'text-charcoal-500 hover:bg-cream-100 hover:text-charcoal-700'}`}>
+              className={({ isActive }) => `block px-4 py-2 text-sm flex items-center justify-between hover:bg-cream-100 ${isActive ? 'bg-cream-100' : ''}`}
+              style={{ color: item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>
               {item.label}
-              {item.count > 0 && <span className="bg-sage-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
+              {item.count > 0 && <span style={{ backgroundColor: '#2c2826' }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
             </NavLink>
           ))}
         </div>
