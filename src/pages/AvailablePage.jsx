@@ -136,10 +136,13 @@ export default function AvailablePage({ breed }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {sold.map((animal) => {
-                const photos = (animal.animal_media || []).filter(m => m.media_type === 'photo' && !m.url?.includes('.pdf'));
+                const media = (animal.animal_media || []).filter(m => !m.url?.includes('.pdf'));
+                const photos = media.filter(m => m.media_type === 'photo');
+                const videos = media.filter(m => m.media_type === 'video');
                 const primaryPhoto = photos.find(m => m.is_primary) || photos[0];
                 return (
                   <div key={animal.id} className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm">
+                    {/* Photo gallery */}
                     {photos.length > 1 ? (
                       <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                         {photos.map((m, i) => (
@@ -168,6 +171,16 @@ export default function AvailablePage({ breed }) {
                     ) : (
                       <div className="aspect-[4/3] bg-cream-200 flex items-center justify-center">
                         <Camera className="w-10 h-10 text-cream-300" />
+                      </div>
+                    )}
+                    {/* Video player if available */}
+                    {videos.length > 0 && (
+                      <div className="px-4 pt-2">
+                        {videos.map(v => (
+                          <video key={v.id} controls playsInline preload="metadata" className="w-full rounded-lg" style={{ maxHeight: '200px' }}>
+                            <source src={v.url} />
+                          </video>
+                        ))}
                       </div>
                     )}
                     <div className="p-4">
