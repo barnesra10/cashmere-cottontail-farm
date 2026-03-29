@@ -360,7 +360,7 @@ export default function Admin() {
             {!getDeviceToken() && (
               <button onClick={() => {
                 registerDevice('ccf2025admin', 'My Device')
-                  .then(() => alert('Device registered! You won\'t need a password on this phone for 30 days.'))
+                  .then(() => alert('Device registered! You won\'t need a password on this phone for 1 year.'))
                   .catch(e => alert('Error: ' + e.message));
               }} className="text-xs bg-cream-100 hover:bg-cream-200 text-charcoal-500 px-3 py-1.5 rounded-full flex items-center gap-1 transition-colors">
                 <Smartphone className="w-3.5 h-3.5" /> Remember Device
