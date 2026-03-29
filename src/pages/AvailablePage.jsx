@@ -159,6 +159,8 @@ export default function AvailablePage({ breed }) {
 function SoldAnimalCard({ animal }) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchDelta, setTouchDelta] = useState(0);
 
   const allMedia = (animal.animal_media || []).filter(m => !m.url?.includes('.pdf'));
   const photos = allMedia.filter(m => m.media_type === 'photo');
@@ -221,7 +223,16 @@ function SoldAnimalCard({ animal }) {
 
       {/* Lightbox */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={closeLightbox}>
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={closeLightbox}
+          onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
+          onTouchMove={(e) => { if (touchStart !== null) setTouchDelta(e.touches[0].clientX - touchStart); }}
+          onTouchEnd={() => {
+            if (Math.abs(touchDelta) > 60) {
+              if (touchDelta > 0) prev(); else next();
+            }
+            setTouchStart(null); setTouchDelta(0);
+          }}>
           <button className="absolute top-4 right-4 text-white/80 hover:text-white z-50 p-2" onClick={closeLightbox}>
             <X className="w-7 h-7" />
           </button>
@@ -239,14 +250,16 @@ function SoldAnimalCard({ animal }) {
             </>
           )}
 
-          <div className="max-w-3xl max-h-[85vh] w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="max-w-3xl max-h-[85vh] w-full mx-4 transition-transform duration-150"
+            style={{ transform: `translateX(${touchDelta * 0.5}px)` }}
+            onClick={(e) => e.stopPropagation()}>
             {gallery[lightboxIdx]?.media_type === 'video' ? (
               <video controls autoPlay playsInline className="w-full max-h-[80vh] rounded-lg">
                 <source src={gallery[lightboxIdx].url} />
               </video>
             ) : (
               <img src={gallery[lightboxIdx]?.url} alt={animal.name}
-                className="w-full max-h-[80vh] object-contain rounded-lg" />
+                className="w-full max-h-[80vh] object-contain rounded-lg select-none" draggable={false} />
             )}
             <div className="text-center mt-3 text-white/60 text-sm">
               {lightboxIdx + 1} / {gallery.length}
