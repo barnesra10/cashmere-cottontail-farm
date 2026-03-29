@@ -3,30 +3,34 @@ import { Play, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 export default function MediaGallery({ media = [], name = '' }) {
   const [lightbox, setLightbox] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchDelta, setTouchDelta] = useState(0);
 
   if (!media || media.length === 0) return null;
 
-  const sorted = [...media].sort((a, b) => {
-    if (a.is_primary && !b.is_primary) return -1;
-    if (!a.is_primary && b.is_primary) return 1;
-    return (a.sort_order || 0) - (b.sort_order || 0);
-  });
+  const sorted = [...media]
+    .filter(m => !m.url?.includes('.pdf'))
+    .sort((a, b) => {
+      if (a.is_primary && !b.is_primary) return -1;
+      if (!a.is_primary && b.is_primary) return 1;
+      return (a.sort_order || 0) - (b.sort_order || 0);
+    });
 
-  const primary = sorted[0];
-  const rest = sorted.slice(1);
+  const photos = sorted.filter(m => m.media_type === 'photo');
+  const videos = sorted.filter(m => m.media_type === 'video');
+  const primary = photos[0] || sorted[0];
 
   const openLightbox = (index) => setLightbox(index);
-  const closeLightbox = () => setLightbox(null);
+  const closeLightbox = () => { setLightbox(null); setTouchDelta(0); setTouchStart(null); };
   const prev = () => setLightbox(i => (i > 0 ? i - 1 : sorted.length - 1));
   const next = () => setLightbox(i => (i < sorted.length - 1 ? i + 1 : 0));
 
   return (
     <>
-      {/* Main display */}
-      <div className="space-y-2">
-        {/* Primary media */}
-        <div className="aspect-square bg-cream-100 rounded-xl overflow-hidden cursor-pointer relative group"
-          onClick={() => openLightbox(0)}>
+      <div className="space-y-0">
+        {/* Primary image */}
+        <div className="aspect-[4/3] bg-cream-100 overflow-hidden cursor-pointer relative group"
+          onClick={() => openLightbox(sorted.indexOf(primary))}>
           {primary.media_type === 'video' ? (
             <>
               <video src={primary.url} className="w-full h-full object-cover" muted playsInline preload="metadata" />
@@ -40,20 +44,20 @@ export default function MediaGallery({ media = [], name = '' }) {
             <img src={primary.url} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           )}
           {sorted.length > 1 && (
-            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-              1/{sorted.length}
-            </span>
+            <div className="absolute bottom-2 left-2 bg-charcoal-700/70 text-white text-[10px] px-2 py-0.5 rounded-full">
+              {photos.length} photo{photos.length !== 1 ? 's' : ''}{videos.length > 0 ? ` \u00b7 ${videos.length} video` : ''}
+            </div>
           )}
         </div>
 
         {/* Thumbnail strip */}
-        {rest.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {sorted.length > 1 && (
+          <div className="flex gap-1.5 px-3 py-2 overflow-x-auto scrollbar-hide">
             {sorted.map((m, i) => (
               <button key={m.id} onClick={() => openLightbox(i)}
                 className={`flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
-                  i === 0 ? 'border-sage-400' : 'border-cream-200 hover:border-sage-300'
-                } relative`}>
+                  m.id === primary.id ? 'border-sage-500' : 'border-cream-200 hover:border-cream-400'
+                }`}>
                 {m.media_type === 'video' ? (
                   <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
                     <Play className="w-4 h-4 text-white/80" />
@@ -67,38 +71,48 @@ export default function MediaGallery({ media = [], name = '' }) {
         )}
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox with swipe */}
       {lightbox !== null && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-          onClick={closeLightbox}>
-          <button onClick={closeLightbox} className="absolute top-4 right-4 text-white/70 hover:text-white z-10 p-2">
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={closeLightbox}
+          onTouchStart={(e) => setTouchStart(e.touches[0].clientX)}
+          onTouchMove={(e) => { if (touchStart !== null) setTouchDelta(e.touches[0].clientX - touchStart); }}
+          onTouchEnd={() => {
+            if (Math.abs(touchDelta) > 60) {
+              if (touchDelta > 0) prev(); else next();
+            }
+            setTouchStart(null); setTouchDelta(0);
+          }}>
+          <button onClick={closeLightbox} className="absolute top-4 right-4 text-white/80 hover:text-white z-50 p-2">
             <X className="w-7 h-7" />
           </button>
 
           {sorted.length > 1 && (
             <>
               <button onClick={(e) => { e.stopPropagation(); prev(); }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-10">
+                className="absolute left-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-50">
                 <ChevronLeft className="w-8 h-8" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); next(); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-10">
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-50">
                 <ChevronRight className="w-8 h-8" />
               </button>
             </>
           )}
 
-          <div className="max-w-4xl max-h-[85vh] w-full mx-4" onClick={e => e.stopPropagation()}>
+          <div className="max-w-3xl max-h-[85vh] w-full mx-4 transition-transform duration-150"
+            style={{ transform: `translateX(${touchDelta * 0.5}px)` }}
+            onClick={e => e.stopPropagation()}>
             {sorted[lightbox].media_type === 'video' ? (
               <video src={sorted[lightbox].url} controls autoPlay playsInline
-                className="w-full max-h-[85vh] rounded-lg" />
+                className="w-full max-h-[80vh] rounded-lg" />
             ) : (
               <img src={sorted[lightbox].url} alt={name}
-                className="w-full max-h-[85vh] object-contain rounded-lg" />
+                className="w-full max-h-[80vh] object-contain rounded-lg select-none" draggable={false} />
             )}
-            <p className="text-center text-white/50 text-sm mt-2">
-              {lightbox + 1} of {sorted.length} {sorted[lightbox].media_type === 'video' ? '(video)' : ''}
-            </p>
+            <div className="text-center mt-3 text-white/60 text-sm">
+              {lightbox + 1} / {sorted.length}
+            </div>
           </div>
         </div>
       )}
