@@ -54,10 +54,10 @@ export async function registerDevice(adminKey, name) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Registration failed');
   localStorage.setItem(DEVICE_KEY, token);
-  // Also save a long session (30 days)
+  // Also save a long session (1 year)
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     key: adminKey,
-    expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
+    expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000)
   }));
   sessionStorage.setItem('ccf_admin_key', adminKey);
   return data;
