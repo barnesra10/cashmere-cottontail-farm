@@ -7,6 +7,10 @@ import { supabase } from '../lib/supabase';
 
 function NavDropdown({ label, items, mobile, onClose, highlight }) {
   const [open, setOpen] = useState(false);
+  // Colors from logo palette
+  const availColor = '#2c2826';  // dark sheep
+  const noAvailColor = '#807a72'; // silkies
+
   if (mobile) {
     return (
       <div>
@@ -17,10 +21,10 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
           <div className="pl-4 space-y-1">
             {items.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
-                className={({ isActive }) => `block py-1.5 text-sm flex items-center gap-2 ${isActive ? 'font-semibold' : ''}`}
-                style={{ color: isActive => item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>
-                <span style={{ color: item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>{item.label}</span>
-                {item.count > 0 && <span style={{ backgroundColor: '#2c2826' }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
+                className="block py-1.5 text-sm flex items-center gap-2"
+                style={{ color: item.count > 0 ? availColor : noAvailColor, fontWeight: item.count > 0 ? 600 : 400 }}>
+                {item.label}
+                {item.count > 0 && <span style={{ backgroundColor: availColor }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
               </NavLink>
             ))}
           </div>
@@ -31,7 +35,7 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
   return (
     <div className="relative group" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button className="flex items-center gap-1 font-body text-sm tracking-wide transition-colors uppercase"
-        style={{ color: highlight ? '#2c2826' : '#9A9085', fontWeight: highlight ? 600 : 400 }}>
+        style={{ color: highlight ? availColor : '#9A9085', fontWeight: highlight ? 600 : 400 }}>
         {label} <ChevronDown className="w-3.5 h-3.5" />
       </button>
       {open && (
@@ -39,9 +43,9 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
           {items.map(item => (
             <NavLink key={item.to} to={item.to}
               className={({ isActive }) => `block px-4 py-2 text-sm flex items-center justify-between hover:bg-cream-100 ${isActive ? 'bg-cream-100' : ''}`}
-              style={{ color: item.count > 0 ? '#2c2826' : '#c0b8aa', fontWeight: item.count > 0 ? 600 : 400 }}>
+              style={{ color: item.count > 0 ? availColor : noAvailColor, fontWeight: item.count > 0 ? 600 : 400 }}>
               {item.label}
-              {item.count > 0 && <span style={{ backgroundColor: '#2c2826' }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
+              {item.count > 0 && <span style={{ backgroundColor: availColor }} className="text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
             </NavLink>
           ))}
         </div>
@@ -68,7 +72,7 @@ export default function Layout() {
     });
   }, [location.pathname]);
 
-  const animalItems = breeds.map(b => ({ to: `/${b.slug}`, label: b.name }));
+  const animalItems = breeds.map(b => ({ to: `/${b.slug}`, label: b.name, count: availableCounts[b.id] || 0 }));
   const availableItems = breeds.map(b => ({ to: `/${b.slug}/available`, label: b.short_name || b.name, count: availableCounts[b.id] || 0 }));
   const totalAvailable = Object.values(availableCounts).reduce((sum, c) => sum + c, 0);
 
@@ -93,7 +97,7 @@ export default function Layout() {
                 className={({ isActive }) => `font-body text-sm tracking-wide uppercase ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500 hover:text-charcoal-700'} transition-colors`}>
                 Our Farm
               </NavLink>
-              <NavDropdown label="Our Animals" items={animalItems} />
+              <NavDropdown label="Our Animals" items={animalItems} highlight={totalAvailable > 0} />
               <NavDropdown label="Available" items={availableItems} highlight={totalAvailable > 0} />
               <NavLink to="/produce"
                 className={({ isActive }) => `font-body text-sm tracking-wide uppercase ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500 hover:text-charcoal-700'} transition-colors`}>
@@ -119,7 +123,7 @@ export default function Layout() {
               className={({ isActive }) => `block py-2 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
               Our Farm
             </NavLink>
-            <NavDropdown label="Our Animals" items={animalItems} mobile onClose={() => setMobileOpen(false)} />
+            <NavDropdown label="Our Animals" items={animalItems} highlight={totalAvailable > 0} mobile onClose={() => setMobileOpen(false)} />
             <NavDropdown label="Available" items={availableItems} highlight={totalAvailable > 0} mobile onClose={() => setMobileOpen(false)} />
             <NavLink to="/produce" onClick={() => setMobileOpen(false)}
               className={({ isActive }) => `block py-2 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
