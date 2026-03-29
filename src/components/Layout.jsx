@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, MessageCircle, MessageSquare } from 'lucide-react';
+import { Menu, X, ChevronDown, MessageCircle, MessageSquare, Settings, Camera, FileText, Share2 } from 'lucide-react';
 import ChatWidget from './ChatWidget';
 import { useBreeds } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
+import { getDeviceToken } from '../lib/adminAuth';
 
 function NavDropdown({ label, items, mobile, onClose, highlight }) {
   const [open, setOpen] = useState(false);
@@ -133,6 +134,47 @@ export default function Layout() {
               className={({ isActive }) => `block py-2 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
               Contact
             </NavLink>
+
+            {/* Admin section — only visible on trusted devices */}
+            {getDeviceToken() && (
+              <>
+                <div className="border-t border-cream-200 mt-3 pt-3">
+                  <p className="text-[10px] uppercase tracking-widest text-charcoal-300 font-semibold mb-2">Farm Management</p>
+                  <NavLink to="/admin" onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-3 py-2.5 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
+                    <Settings className="w-4 h-4" />
+                    <div>
+                      <span className="block text-sm font-medium">Admin Panel</span>
+                      <span className="block text-[10px] text-charcoal-300">Manage animals, photos, messages</span>
+                    </div>
+                  </NavLink>
+                  <NavLink to="/post" onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-3 py-2.5 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
+                    <Camera className="w-4 h-4" />
+                    <div>
+                      <span className="block text-sm font-medium">Quick Post</span>
+                      <span className="block text-[10px] text-charcoal-300">Camera-first animal posting</span>
+                    </div>
+                  </NavLink>
+                  <NavLink to="/bill-of-sale" onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-3 py-2.5 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
+                    <FileText className="w-4 h-4" />
+                    <div>
+                      <span className="block text-sm font-medium">Bill of Sale</span>
+                      <span className="block text-[10px] text-charcoal-300">Generate & email sale documents</span>
+                    </div>
+                  </NavLink>
+                  <NavLink to="/social-post" onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-3 py-2.5 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
+                    <Share2 className="w-4 h-4" />
+                    <div>
+                      <span className="block text-sm font-medium">Social Media</span>
+                      <span className="block text-[10px] text-charcoal-300">Create & schedule social posts</span>
+                    </div>
+                  </NavLink>
+                </div>
+              </>
+            )}
           </div>
         )}
       </header>
