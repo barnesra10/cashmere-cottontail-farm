@@ -1,23 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, MessageCircle, MessageSquare } from 'lucide-react';
 import ChatWidget from './ChatWidget';
 import { useBreeds } from '../hooks/useData';
+import { supabase } from '../lib/supabase';
 
-function NavDropdown({ label, items, mobile, onClose }) {
+function NavDropdown({ label, items, mobile, onClose, highlight }) {
   const [open, setOpen] = useState(false);
   if (mobile) {
     return (
       <div>
         <button onClick={() => setOpen(!open)} className="flex items-center gap-1 w-full py-2 font-body text-charcoal-600 hover:text-sage-500 transition-colors">
-          {label} <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+          {label} {highlight && <span className="w-2 h-2 rounded-full bg-sage-500 inline-block" />} <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
         {open && (
           <div className="pl-4 space-y-1">
             {items.map(item => (
               <NavLink key={item.to} to={item.to} onClick={onClose}
-                className={({ isActive }) => `block py-1.5 text-sm ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-400 hover:text-charcoal-600'}`}>
+                className={({ isActive }) => `block py-1.5 text-sm flex items-center gap-2 ${isActive ? 'text-sage-500 font-semibold' : item.count > 0 ? 'text-sage-600 font-medium' : 'text-charcoal-400 hover:text-charcoal-600'}`}>
                 {item.label}
+                {item.count > 0 && <span className="bg-sage-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
               </NavLink>
             ))}
           </div>
@@ -27,15 +29,16 @@ function NavDropdown({ label, items, mobile, onClose }) {
   }
   return (
     <div className="relative group" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button className="flex items-center gap-1 font-body text-sm tracking-wide text-charcoal-500 hover:text-charcoal-700 transition-colors uppercase">
-        {label} <ChevronDown className="w-3.5 h-3.5" />
+      <button className={`flex items-center gap-1 font-body text-sm tracking-wide transition-colors uppercase ${highlight ? 'text-sage-600 font-semibold' : 'text-charcoal-500 hover:text-charcoal-700'}`}>
+        {label} {highlight && <span className="w-2 h-2 rounded-full bg-sage-500 inline-block" />} <ChevronDown className="w-3.5 h-3.5" />
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 bg-white shadow-lg rounded-lg border border-cream-200 py-2 min-w-[200px] z-50">
           {items.map(item => (
             <NavLink key={item.to} to={item.to}
-              className={({ isActive }) => `block px-4 py-2 text-sm ${isActive ? 'text-sage-500 bg-sage-50 font-semibold' : 'text-charcoal-500 hover:bg-cream-100 hover:text-charcoal-700'}`}>
+              className={({ isActive }) => `block px-4 py-2 text-sm flex items-center justify-between ${isActive ? 'text-sage-500 bg-sage-50 font-semibold' : item.count > 0 ? 'text-sage-600 font-medium hover:bg-cream-100' : 'text-charcoal-500 hover:bg-cream-100 hover:text-charcoal-700'}`}>
               {item.label}
+              {item.count > 0 && <span className="bg-sage-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">{item.count}</span>}
             </NavLink>
           ))}
         </div>
@@ -50,8 +53,21 @@ export default function Layout() {
   const location = useLocation();
 
   const { breeds } = useBreeds();
+  const [availableCounts, setAvailableCounts] = useState({});
+
+  useEffect(() => {
+    supabase.from('animals').select('breed_id').eq('role', 'available').then(({ data }) => {
+      if (data) {
+        const counts = {};
+        data.forEach(a => { counts[a.breed_id] = (counts[a.breed_id] || 0) + 1; });
+        setAvailableCounts(counts);
+      }
+    });
+  }, [location.pathname]);
+
   const animalItems = breeds.map(b => ({ to: `/${b.slug}`, label: b.name }));
-  const availableItems = breeds.map(b => ({ to: `/${b.slug}/available`, label: b.short_name || b.name }));
+  const availableItems = breeds.map(b => ({ to: `/${b.slug}/available`, label: b.short_name || b.name, count: availableCounts[b.id] || 0 }));
+  const totalAvailable = Object.values(availableCounts).reduce((sum, c) => sum + c, 0);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -75,7 +91,7 @@ export default function Layout() {
                 Our Farm
               </NavLink>
               <NavDropdown label="Our Animals" items={animalItems} />
-              <NavDropdown label="Available" items={availableItems} />
+              <NavDropdown label="Available" items={availableItems} highlight={totalAvailable > 0} />
               <NavLink to="/produce"
                 className={({ isActive }) => `font-body text-sm tracking-wide uppercase ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500 hover:text-charcoal-700'} transition-colors`}>
                 Produce
@@ -101,7 +117,7 @@ export default function Layout() {
               Our Farm
             </NavLink>
             <NavDropdown label="Our Animals" items={animalItems} mobile onClose={() => setMobileOpen(false)} />
-            <NavDropdown label="Available" items={availableItems} mobile onClose={() => setMobileOpen(false)} />
+            <NavDropdown label="Available" items={availableItems} highlight={totalAvailable > 0} mobile onClose={() => setMobileOpen(false)} />
             <NavLink to="/produce" onClick={() => setMobileOpen(false)}
               className={({ isActive }) => `block py-2 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
               Produce
