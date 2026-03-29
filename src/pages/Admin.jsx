@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText } from 'lucide-react';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
@@ -46,6 +46,23 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
     setProgress('');
   };
 
+  const moveMedia = async (index, direction) => {
+    const sorted = [...existingMedia];
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= sorted.length) return;
+    // Swap sort_order values
+    const key = sessionStorage.getItem('ccf_admin_key');
+    const api = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
+    try {
+      await fetch(`${api}/media/reorder`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+        body: JSON.stringify({ media_id_a: sorted[index].id, media_id_b: sorted[newIndex].id })
+      });
+      onUpdate();
+    } catch (e) { console.error(e); }
+  };
+
   const photos = existingMedia.filter(m => m.media_type === 'photo');
   const videos = existingMedia.filter(m => m.media_type === 'video');
 
@@ -53,7 +70,7 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
     <div className="space-y-2">
       {/* Media grid */}
       <div className="flex flex-wrap gap-2">
-        {existingMedia.map(m => (
+        {existingMedia.map((m, i) => (
           <div key={m.id} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-cream-200 group">
             {m.media_type === 'video' ? (
               <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
@@ -64,11 +81,14 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
             )}
             {m.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
             {m.media_type === 'video' && <span className="absolute bottom-0.5 left-0.5 bg-charcoal-700 text-white text-[8px] px-1 rounded">Video</span>}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity">
-              {m.media_type === 'photo' && (
-                <button onClick={() => setPrimaryMedia(m.id, animalId).then(onUpdate)} className="text-white p-1"><Eye className="w-3 h-3" /></button>
-              )}
-              <button onClick={() => deleteMedia(m.id).then(onUpdate)} className="text-red-300 p-1"><Trash2 className="w-3 h-3" /></button>
+            {/* Reorder + action overlay */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-0.5 transition-opacity">
+              <div className="flex gap-1">
+                {i > 0 && <button onClick={() => moveMedia(i, -1)} className="text-white p-0.5"><ChevronLeft className="w-4 h-4" /></button>}
+                {m.media_type === 'photo' && <button onClick={() => setPrimaryMedia(m.id, animalId).then(onUpdate)} className="text-white p-0.5" title="Set as primary"><Eye className="w-3.5 h-3.5" /></button>}
+                {i < existingMedia.length - 1 && <button onClick={() => moveMedia(i, 1)} className="text-white p-0.5"><ChevronRight className="w-4 h-4" /></button>}
+              </div>
+              <button onClick={() => deleteMedia(m.id).then(onUpdate)} className="text-red-300 p-0.5"><Trash2 className="w-3 h-3" /></button>
             </div>
           </div>
         ))}

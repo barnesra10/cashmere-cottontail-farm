@@ -76,3 +76,7 @@ body {
   right: 24px;
   z-index: 1000;
 }
+
+/* Hide scrollbar for swipeable galleries */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

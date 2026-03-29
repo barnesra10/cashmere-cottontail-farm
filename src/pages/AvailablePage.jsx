@@ -134,26 +134,45 @@ export default function AvailablePage({ breed }) {
             </div>
             <p className="font-body text-sm text-charcoal-300 mb-6">These beauties have found their forever homes. See the quality we produce!</p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {sold.map((animal) => {
-                const primaryMedia = animal.animal_media?.find(m => m.is_primary) || animal.animal_media?.[0];
+                const photos = (animal.animal_media || []).filter(m => m.media_type === 'photo' && !m.url?.includes('.pdf'));
+                const primaryPhoto = photos.find(m => m.is_primary) || photos[0];
                 return (
-                  <div key={animal.id} className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm opacity-90">
-                    {primaryMedia ? (
-                      <div className="aspect-square relative">
-                        <img src={primaryMedia.url} alt={animal.name} className="w-full h-full object-cover" />
+                  <div key={animal.id} className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm">
+                    {photos.length > 1 ? (
+                      <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                        {photos.map((m, i) => (
+                          <div key={m.id} className="flex-none w-full aspect-[4/3] snap-center relative">
+                            <img src={m.url} alt={`${animal.name} ${i + 1}`} className="w-full h-full object-cover" />
+                            {i === 0 && (
+                              <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                Found their home
+                              </div>
+                            )}
+                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                              {photos.map((_, j) => (
+                                <div key={j} className={`w-1.5 h-1.5 rounded-full ${j === i ? 'bg-white' : 'bg-white/40'}`} />
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : primaryPhoto ? (
+                      <div className="aspect-[4/3] relative">
+                        <img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />
                         <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
                           Found their home
                         </div>
                       </div>
                     ) : (
-                      <div className="aspect-square bg-cream-200 flex items-center justify-center">
-                        <Camera className="w-8 h-8 text-cream-300" />
+                      <div className="aspect-[4/3] bg-cream-200 flex items-center justify-center">
+                        <Camera className="w-10 h-10 text-cream-300" />
                       </div>
                     )}
-                    <div className="p-3">
-                      <p className="font-display font-semibold text-charcoal-600 text-sm">{animal.name}</p>
-                      <p className="text-[10px] text-charcoal-300">{animal.sex}{animal.description ? ` · ${animal.description.substring(0, 40)}${animal.description.length > 40 ? '...' : ''}` : ''}</p>
+                    <div className="p-4">
+                      <p className="font-display font-semibold text-charcoal-600">{animal.name}</p>
+                      <p className="text-xs text-charcoal-300 mt-0.5">{animal.sex}{animal.description ? ` · ${animal.description.substring(0, 60)}${animal.description.length > 60 ? '...' : ''}` : ''}</p>
                     </div>
                   </div>
                 );
