@@ -74,38 +74,16 @@ export default function BillOfSale() {
   const set = (k, v) => setBuyer(prev => ({ ...prev, [k]: v }));
 
   useEffect(() => {
-    const tryAuth = async () => {
-      // Try saved session first
-      const key = getSavedSession();
-      if (key) {
-        setAdminKey(key); sessionStorage.setItem('ccf_admin_key', key);
-        try {
-          const r = await fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': key } });
-          const data = await r.json();
+    const key = getSavedSession();
+    if (key) {
+      setAdminKey(key); sessionStorage.setItem('ccf_admin_key', key);
+      fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': key } })
+        .then(r => r.json()).then(data => {
           if (Array.isArray(data)) setAnimals(data);
           setAuthed(true);
-          setChecking(false);
-          return;
-        } catch {}
-      }
-      // Try passkey
-      if (isPasskeySupported()) {
-        try {
-          const result = await authenticateWithPasskey();
-          if (result.success) {
-            setAdminKey('ccf2025admin'); sessionStorage.setItem('ccf_admin_key', 'ccf2025admin');
-            const r = await fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': 'ccf2025admin' } });
-            const data = await r.json();
-            if (Array.isArray(data)) setAnimals(data);
-            setAuthed(true);
-            setChecking(false);
-            return;
-          }
-        } catch {}
-      }
-      setChecking(false);
-    };
-    tryAuth();
+        }).catch(() => {});
+    }
+    setChecking(false);
   }, []);
 
   useEffect(() => {

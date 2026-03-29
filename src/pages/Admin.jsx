@@ -10,12 +10,8 @@ function LoginScreen({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passkeyStatus, setPasskeyStatus] = useState(''); // '', 'trying', 'no_passkeys', 'failed'
+  // Don't auto-try passkey - let user tap the button to avoid "not focused" error
   const supportsPasskey = isPasskeySupported();
-
-  // Auto-try passkey on mount
-  useEffect(() => {
-    if (supportsPasskey) tryPasskey();
-  }, []);
 
   const tryPasskey = async () => {
     setPasskeyStatus('trying');
@@ -400,13 +396,10 @@ export default function Admin() {
           <h1 className="font-display text-xl font-bold text-charcoal-600">Farm Admin</h1>
           <div className="flex items-center gap-2">
             {isPasskeySupported() && (
-              <button onClick={async () => {
-                const name = prompt('Name this device (e.g. "Scott iPhone", "Raegon iPhone"):');
-                if (!name) return;
-                try {
-                  await registerPasskey('ccf2025admin', name);
-                  alert('Face ID registered! Next time you can sign in without a password.');
-                } catch (e) { alert('Registration failed: ' + e.message); }
+              <button onClick={() => {
+                registerPasskey('ccf2025admin', 'My iPhone')
+                  .then(() => alert('Face ID registered! Next time you can sign in without a password.'))
+                  .catch(e => alert('Registration failed: ' + e.message));
               }} className="text-charcoal-300 hover:text-sage-500 p-2" title="Register Face ID">
                 <Fingerprint className="w-5 h-5" />
               </button>
