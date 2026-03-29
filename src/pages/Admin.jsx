@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
@@ -33,6 +33,8 @@ function LoginScreen({ onLogin }) {
 function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState('');
+  const [dragIdx, setDragIdx] = useState(null);
+  const [overIdx, setOverIdx] = useState(null);
 
   const handleUpload = async (file) => {
     setUploading(true);
@@ -46,49 +48,72 @@ function MediaUploader({ animalId, existingMedia = [], onUpdate }) {
     setProgress('');
   };
 
-  const moveMedia = async (index, direction) => {
-    const sorted = [...existingMedia];
-    const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= sorted.length) return;
-    // Swap sort_order values
-    const key = sessionStorage.getItem('ccf_admin_key');
-    const api = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
-    try {
-      await fetch(`${api}/media/reorder`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
-        body: JSON.stringify({ media_id_a: sorted[index].id, media_id_b: sorted[newIndex].id })
-      });
-      onUpdate();
-    } catch (e) { console.error(e); }
+  const handleDragEnd = async () => {
+    if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
+      const key = sessionStorage.getItem('ccf_admin_key');
+      const api = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
+      try {
+        await fetch(`${api}/media/reorder`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-key': key },
+          body: JSON.stringify({ media_id_a: existingMedia[dragIdx].id, media_id_b: existingMedia[overIdx].id })
+        });
+        onUpdate();
+      } catch (e) { console.error(e); }
+    }
+    setDragIdx(null);
+    setOverIdx(null);
   };
+
+  // Touch drag support
+  const touchStartRef = { current: null };
+  const handleTouchStart = (e, idx) => {
+    touchStartRef.current = { idx, x: e.touches[0].clientX, y: e.touches[0].clientY };
+    setDragIdx(idx);
+  };
+  const handleTouchMove = (e) => {
+    if (dragIdx === null) return;
+    const touch = e.touches[0];
+    // Find which media element we're over
+    const els = document.querySelectorAll(`[data-media-animal="${animalId}"]`);
+    els.forEach((el, i) => {
+      const rect = el.getBoundingClientRect();
+      if (touch.clientX >= rect.left && touch.clientX <= rect.right && touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        setOverIdx(i);
+      }
+    });
+  };
+  const handleTouchEnd = () => handleDragEnd();
 
   const photos = existingMedia.filter(m => m.media_type === 'photo');
   const videos = existingMedia.filter(m => m.media_type === 'video');
 
   return (
-    <div className="space-y-2">
-      {/* Media grid */}
+    <div className="space-y-2" onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <div className="flex flex-wrap gap-2">
         {existingMedia.map((m, i) => (
-          <div key={m.id} className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-cream-200 group">
+          <div key={m.id} data-media-animal={animalId}
+            draggable onDragStart={() => setDragIdx(i)} onDragOver={(e) => { e.preventDefault(); setOverIdx(i); }} onDrop={handleDragEnd}
+            onTouchStart={(e) => handleTouchStart(e, i)}
+            className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 group cursor-grab active:cursor-grabbing transition-all ${
+              dragIdx === i ? 'opacity-50 scale-95 border-sage-400' :
+              overIdx === i && dragIdx !== null ? 'border-sage-500 ring-2 ring-sage-300' : 'border-cream-200'
+            }`}>
             {m.media_type === 'video' ? (
               <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
                 <Play className="w-6 h-6 text-white/80" />
               </div>
             ) : (
-              <img src={m.url} alt="" className="w-full h-full object-cover" />
+              <img src={m.url} alt="" className="w-full h-full object-cover pointer-events-none" />
             )}
             {m.is_primary && <span className="absolute top-0.5 left-0.5 bg-sage-500 text-white text-[8px] px-1 rounded">Primary</span>}
             {m.media_type === 'video' && <span className="absolute bottom-0.5 left-0.5 bg-charcoal-700 text-white text-[8px] px-1 rounded">Video</span>}
-            {/* Reorder + action overlay */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-0.5 transition-opacity">
-              <div className="flex gap-1">
-                {i > 0 && <button onClick={() => moveMedia(i, -1)} className="text-white p-0.5"><ChevronLeft className="w-4 h-4" /></button>}
-                {m.media_type === 'photo' && <button onClick={() => setPrimaryMedia(m.id, animalId).then(onUpdate)} className="text-white p-0.5" title="Set as primary"><Eye className="w-3.5 h-3.5" /></button>}
-                {i < existingMedia.length - 1 && <button onClick={() => moveMedia(i, 1)} className="text-white p-0.5"><ChevronRight className="w-4 h-4" /></button>}
-              </div>
-              <button onClick={() => deleteMedia(m.id).then(onUpdate)} className="text-red-300 p-0.5"><Trash2 className="w-3 h-3" /></button>
+            {/* Action overlay - only set primary + delete */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+              {m.media_type === 'photo' && (
+                <button onClick={(e) => { e.stopPropagation(); setPrimaryMedia(m.id, animalId).then(onUpdate); }} className="text-white p-1 bg-black/30 rounded" title="Set as primary"><Eye className="w-3.5 h-3.5" /></button>
+              )}
+              <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this?')) deleteMedia(m.id).then(onUpdate); }} className="text-red-300 p-1 bg-black/30 rounded" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           </div>
         ))}
