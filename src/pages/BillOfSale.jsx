@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, FileText, Send, Loader, Check } from 'lucide-react';
-import { getSavedSession } from '../lib/adminAuth';
+import { ArrowLeft, FileText, Send, Loader, Check, Lock, Fingerprint } from 'lucide-react';
+import { getSavedSession, isPasskeySupported, authenticateWithPasskey } from '../lib/adminAuth';
 import { setAdminKey, getAdminKey } from '../lib/adminApi';
 import SEO from '../components/SEO';
 
@@ -74,16 +74,38 @@ export default function BillOfSale() {
   const set = (k, v) => setBuyer(prev => ({ ...prev, [k]: v }));
 
   useEffect(() => {
-    const key = getSavedSession();
-    if (key) {
-      setAdminKey(key); sessionStorage.setItem('ccf_admin_key', key);
-      fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': key } })
-        .then(r => r.json()).then(data => {
+    const tryAuth = async () => {
+      // Try saved session first
+      const key = getSavedSession();
+      if (key) {
+        setAdminKey(key); sessionStorage.setItem('ccf_admin_key', key);
+        try {
+          const r = await fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': key } });
+          const data = await r.json();
           if (Array.isArray(data)) setAnimals(data);
           setAuthed(true);
-        }).catch(() => {});
-    }
-    setChecking(false);
+          setChecking(false);
+          return;
+        } catch {}
+      }
+      // Try passkey
+      if (isPasskeySupported()) {
+        try {
+          const result = await authenticateWithPasskey();
+          if (result.success) {
+            setAdminKey('ccf2025admin'); sessionStorage.setItem('ccf_admin_key', 'ccf2025admin');
+            const r = await fetch(`${ADMIN_API}/animals`, { headers: { 'x-admin-key': 'ccf2025admin' } });
+            const data = await r.json();
+            if (Array.isArray(data)) setAnimals(data);
+            setAuthed(true);
+            setChecking(false);
+            return;
+          }
+        } catch {}
+      }
+      setChecking(false);
+    };
+    tryAuth();
   }, []);
 
   useEffect(() => {

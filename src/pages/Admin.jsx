@@ -1,31 +1,96 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
-import { getSavedSession, saveSession, clearSession } from '../lib/adminAuth';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText } from 'lucide-react';
+import { getSavedSession, saveSession, clearSession, isPasskeySupported, authenticateWithPasskey, registerPasskey } from '../lib/adminAuth';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, Fingerprint, Smartphone } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
   const [pw, setPw] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const tryLogin = async () => {
-    setLoading(true); setAdminKey(pw);
+  const [showPassword, setShowPassword] = useState(false);
+  const [passkeyStatus, setPasskeyStatus] = useState(''); // '', 'trying', 'no_passkeys', 'failed'
+  const supportsPasskey = isPasskeySupported();
+
+  // Auto-try passkey on mount
+  useEffect(() => {
+    if (supportsPasskey) tryPasskey();
+  }, []);
+
+  const tryPasskey = async () => {
+    setPasskeyStatus('trying');
+    setError('');
+    try {
+      const result = await authenticateWithPasskey();
+      if (result.success) {
+        setAdminKey('ccf2025admin');
+        onLogin();
+        return;
+      }
+      if (result.no_passkeys) {
+        setPasskeyStatus('no_passkeys');
+        setShowPassword(true);
+      }
+    } catch (e) {
+      console.log('Passkey auth failed:', e);
+      setPasskeyStatus('failed');
+      setShowPassword(true);
+    }
+  };
+
+  const tryPassword = async () => {
+    setLoading(true); setAdminKey(pw); setError('');
     try { await getBreeds(); saveSession(pw); onLogin(); }
-    catch { setError(true); clearAdminKey(); }
+    catch { setError('Wrong password'); clearAdminKey(); }
     setLoading(false);
   };
+
   return (
     <div className="max-w-sm mx-auto px-4 py-24 text-center">
       <Lock className="w-12 h-12 text-sage-500 mx-auto mb-4" />
       <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-6">Farm Admin</h1>
-      <input type="password" value={pw} onChange={e => { setPw(e.target.value); setError(false); }}
-        onKeyDown={e => e.key === 'Enter' && tryLogin()} placeholder="Enter admin password"
-        className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-charcoal-600 font-body text-center focus:outline-none focus:ring-2 focus:ring-sage-300" />
-      {error && <p className="text-red-500 text-sm mt-2">Wrong password</p>}
-      <button onClick={tryLogin} disabled={loading}
-        className="mt-4 w-full bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-3 rounded-full transition-colors">
-        {loading ? 'Checking...' : 'Log In'}
-      </button>
+
+      {/* Passkey button */}
+      {supportsPasskey && passkeyStatus !== 'trying' && (
+        <button onClick={tryPasskey}
+          className="w-full bg-charcoal-700 hover:bg-charcoal-600 text-white font-semibold py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 mb-4">
+          <Fingerprint className="w-5 h-5" /> Sign in with Face ID
+        </button>
+      )}
+
+      {passkeyStatus === 'trying' && (
+        <div className="mb-6">
+          <Fingerprint className="w-10 h-10 text-sage-500 mx-auto mb-2 animate-pulse" />
+          <p className="text-sm text-charcoal-400">Waiting for Face ID...</p>
+        </div>
+      )}
+
+      {/* Divider */}
+      {supportsPasskey && (showPassword || passkeyStatus === 'failed' || passkeyStatus === 'no_passkeys') && (
+        <div className="flex items-center gap-3 my-4">
+          <div className="flex-1 h-px bg-cream-200" />
+          <span className="text-xs text-charcoal-300">or use password</span>
+          <div className="flex-1 h-px bg-cream-200" />
+        </div>
+      )}
+
+      {/* Password login */}
+      {(!supportsPasskey || showPassword || passkeyStatus === 'no_passkeys') && (
+        <>
+          <input type="password" value={pw} onChange={e => { setPw(e.target.value); setError(''); }}
+            onKeyDown={e => e.key === 'Enter' && tryPassword()} placeholder="Enter admin password"
+            className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-charcoal-600 font-body text-center focus:outline-none focus:ring-2 focus:ring-sage-300" />
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          <button onClick={tryPassword} disabled={loading}
+            className="mt-4 w-full bg-sage-500 hover:bg-sage-600 disabled:opacity-50 text-white font-semibold py-3 rounded-full transition-colors">
+            {loading ? 'Checking...' : 'Log In'}
+          </button>
+        </>
+      )}
+
+      {passkeyStatus === 'no_passkeys' && supportsPasskey && (
+        <p className="text-xs text-charcoal-300 mt-4">No Face ID registered yet. Log in with password first, then register your device in Settings.</p>
+      )}
     </div>
   );
 }
@@ -333,7 +398,21 @@ export default function Admin() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-xl font-bold text-charcoal-600">Farm Admin</h1>
-          <button onClick={() => { clearAdminKey(); clearSession(); setAuthed(false); }} className="text-charcoal-300 hover:text-charcoal-500 p-2"><LogOut className="w-5 h-5" /></button>
+          <div className="flex items-center gap-2">
+            {isPasskeySupported() && (
+              <button onClick={async () => {
+                const name = prompt('Name this device (e.g. "Scott iPhone", "Raegon iPhone"):');
+                if (!name) return;
+                try {
+                  await registerPasskey('ccf2025admin', name);
+                  alert('Face ID registered! Next time you can sign in without a password.');
+                } catch (e) { alert('Registration failed: ' + e.message); }
+              }} className="text-charcoal-300 hover:text-sage-500 p-2" title="Register Face ID">
+                <Fingerprint className="w-5 h-5" />
+              </button>
+            )}
+            <button onClick={() => { clearAdminKey(); clearSession(); setAuthed(false); }} className="text-charcoal-300 hover:text-charcoal-500 p-2"><LogOut className="w-5 h-5" /></button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-6">
