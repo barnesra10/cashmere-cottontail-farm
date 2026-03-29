@@ -1,7 +1,9 @@
-// Admin auth with 48-hour session persistence + passkey support
+// Admin auth with 48-hour session + device registration
+// Registered devices get auto-login without password
 
 const STORAGE_KEY = 'ccf_admin_session';
-const SESSION_DURATION_MS = 48 * 60 * 60 * 1000; // 48 hours
+const DEVICE_KEY = 'ccf_device_token';
+const SESSION_DURATION_MS = 48 * 60 * 60 * 1000;
 const PASSKEY_API = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/passkey';
 
 export function getSavedSession() {
@@ -30,103 +32,63 @@ export function clearSession() {
   sessionStorage.removeItem('ccf_admin_key');
 }
 
-// Base64URL helpers
-function bufToB64url(buf) {
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-function b64urlToBuf(str) {
-  str = str.replace(/-/g, '+').replace(/_/g, '/');
-  while (str.length % 4) str += '=';
-  const binary = atob(str);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
+// Device token registration — simpler than WebAuthn, works everywhere
+function generateToken() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Check if WebAuthn is available
-export function isPasskeySupported() {
-  return !!window.PublicKeyCredential && !!navigator.credentials;
+export function getDeviceToken() {
+  return localStorage.getItem(DEVICE_KEY);
 }
 
-// Register a new passkey (requires password)
-export async function registerPasskey(adminKey, deviceName) {
-  // Step 1: Get registration options
-  const optRes = await fetch(`${PASSKEY_API}/register/options`, {
+// Register this device (requires password)
+export async function registerDevice(adminKey, name) {
+  const token = generateToken();
+  const res = await fetch(`${PASSKEY_API}/register/verify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-    body: JSON.stringify({ name: deviceName })
+    body: JSON.stringify({ credential_id: token, public_key: '', name: name || 'My Device' })
   });
-  const opts = await optRes.json();
-  if (!optRes.ok) throw new Error(opts.error);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Registration failed');
+  localStorage.setItem(DEVICE_KEY, token);
+  // Also save a long session (30 days)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    key: adminKey,
+    expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000)
+  }));
+  sessionStorage.setItem('ccf_admin_key', adminKey);
+  return data;
+}
 
-  // Convert base64url strings to ArrayBuffers for WebAuthn
-  const publicKey = {
-    ...opts.publicKey,
-    challenge: b64urlToBuf(opts.publicKey.challenge),
-    user: {
-      ...opts.publicKey.user,
-      id: b64urlToBuf(opts.publicKey.user.id),
+// Check if this device is registered (auto-login)
+export async function checkDeviceAuth() {
+  const token = localStorage.getItem(DEVICE_KEY);
+  if (!token) return { success: false, no_device: true };
+  
+  try {
+    const res = await fetch(`${PASSKEY_API}/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential_id: token })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      // Auto-save session
+      saveSession('ccf2025admin');
+      return { success: true, name: data.name };
     }
-  };
-
-  // Step 2: Create credential via browser WebAuthn API (triggers Face ID)
-  const credential = await navigator.credentials.create({ publicKey });
-
-  // Step 3: Send credential to server
-  const credId = bufToB64url(credential.rawId);
-  const attestation = bufToB64url(credential.response.attestationObject);
-
-  const verRes = await fetch(`${PASSKEY_API}/register/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-    body: JSON.stringify({
-      credential_id: credId,
-      public_key: attestation,
-      name: deviceName
-    })
-  });
-  const verData = await verRes.json();
-  if (!verRes.ok) throw new Error(verData.error);
-  return verData;
+    // Token not recognized on server — remove it
+    localStorage.removeItem(DEVICE_KEY);
+    return { success: false };
+  } catch {
+    return { success: false };
+  }
 }
 
-// Authenticate with passkey (no password needed)
-export async function authenticateWithPasskey() {
-  // Step 1: Get auth options
-  const optRes = await fetch(`${PASSKEY_API}/auth/options`, { method: 'POST' });
-  const opts = await optRes.json();
-  if (!optRes.ok) {
-    if (opts.no_passkeys) return { success: false, no_passkeys: true };
-    throw new Error(opts.error);
-  }
-
-  // Convert challenge and allowCredentials IDs
-  const publicKey = {
-    ...opts.publicKey,
-    challenge: b64urlToBuf(opts.publicKey.challenge),
-    allowCredentials: opts.publicKey.allowCredentials.map(c => ({
-      ...c,
-      id: b64urlToBuf(c.id),
-    }))
-  };
-
-  // Step 2: Get assertion via browser (triggers Face ID)
-  const assertion = await navigator.credentials.get({ publicKey });
-
-  // Step 3: Verify with server
-  const credId = bufToB64url(assertion.rawId);
-  const verRes = await fetch(`${PASSKEY_API}/auth/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential_id: credId })
-  });
-  const verData = await verRes.json();
-  if (!verRes.ok) throw new Error(verData.error);
-
-  // Save session
-  saveSession('ccf2025admin');
-  return { success: true, name: verData.name };
+// Remove this device's registration
+export function removeDeviceToken() {
+  localStorage.removeItem(DEVICE_KEY);
 }

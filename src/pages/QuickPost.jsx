@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Camera, Video, Send, CheckCircle, Plus, X, Lock, Fingerprint } from 'lucide-react';
+import { Camera, Video, Send, CheckCircle, Plus, X, Lock, Smartphone } from 'lucide-react';
 import { setAdminKey, clearAdminKey, getBreeds } from '../lib/adminApi';
-import { getSavedSession, saveSession, clearSession, isPasskeySupported, authenticateWithPasskey } from '../lib/adminAuth';
+import { getSavedSession, saveSession, clearSession, checkDeviceAuth } from '../lib/adminAuth';
 import SEO from '../components/SEO';
 
 const EDGE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/quick-post';
@@ -24,19 +24,31 @@ export default function QuickPost() {
 
   // Check for cached session on mount
   useEffect(() => {
-    const cachedKey = getSavedSession();
-    if (cachedKey) {
-      setPw(cachedKey);
-      setAdminKey(cachedKey);
-      sessionStorage.setItem('ccf_admin_key', cachedKey);
-      getBreeds().then(b => {
+    const tryAuth = async () => {
+      const cachedKey = getSavedSession();
+      if (cachedKey) {
+        setPw(cachedKey);
+        setAdminKey(cachedKey);
+        sessionStorage.setItem('ccf_admin_key', cachedKey);
+        try {
+          const b = await getBreeds();
+          setBreeds(b);
+          setAuthed(true);
+          return;
+        } catch { clearSession(); }
+      }
+      // Try device token
+      const result = await checkDeviceAuth();
+      if (result.success) {
+        setPw('ccf2025admin');
+        setAdminKey('ccf2025admin');
+        sessionStorage.setItem('ccf_admin_key', 'ccf2025admin');
+        const b = await getBreeds();
         setBreeds(b);
         setAuthed(true);
-      }).catch(() => {
-        clearSession();
-        clearAdminKey();
-      });
-    }
+      }
+    };
+    tryAuth();
   }, []);
 
   const tryLogin = async () => {
@@ -113,20 +125,6 @@ export default function QuickPost() {
   ];
 
   if (!authed) {
-    const tryPasskeyLogin = async () => {
-      if (!isPasskeySupported()) return;
-      try {
-        const result = await authenticateWithPasskey();
-        if (result.success) {
-          setAdminKey('ccf2025admin');
-          setPw('ccf2025admin');
-          const b = await getBreeds();
-          setBreeds(b);
-          setAuthed(true);
-        }
-      } catch (e) { console.log('Passkey failed:', e); }
-    };
-
     return (
       <>
         <SEO title="Quick Post" description="Quick post animals" />
@@ -134,22 +132,6 @@ export default function QuickPost() {
           <Lock className="w-12 h-12 text-sage-500 mx-auto mb-4" />
           <h1 className="font-display text-2xl font-bold text-charcoal-600 mb-2">Quick Post</h1>
           <p className="font-body text-sm text-charcoal-300 mb-6">Post animals from your phone</p>
-
-          {isPasskeySupported() && (
-            <button onClick={tryPasskeyLogin}
-              className="w-full bg-charcoal-700 hover:bg-charcoal-600 text-white font-semibold py-3.5 rounded-full transition-colors flex items-center justify-center gap-2 mb-4">
-              <Fingerprint className="w-5 h-5" /> Sign in with Face ID
-            </button>
-          )}
-
-          {isPasskeySupported() && (
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-cream-200" />
-              <span className="text-xs text-charcoal-300">or use password</span>
-              <div className="flex-1 h-px bg-cream-200" />
-            </div>
-          )}
-
           <input type="password" value={pw} onChange={e => { setPw(e.target.value); setLoginError(false); }}
             onKeyDown={e => e.key === 'Enter' && tryLogin()} placeholder="Admin password"
             className="w-full px-4 py-3 bg-cream-50 border border-cream-200 rounded-xl text-charcoal-600 font-body text-center focus:outline-none focus:ring-2 focus:ring-sage-300" />
