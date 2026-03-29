@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, Camera, Bell, Heart, Award } from 'lucide-react';
+import { ArrowLeft, Calendar, Camera, Bell, Heart, Award, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import SEO from '../components/SEO';
 import MediaGallery from '../components/MediaGallery';
 import { useAnimals, useLitters } from '../hooks/useData';
@@ -135,61 +136,9 @@ export default function AvailablePage({ breed }) {
             <p className="font-body text-sm text-charcoal-300 mb-6">These beauties have found their forever homes. See the quality we produce!</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {sold.map((animal) => {
-                const media = (animal.animal_media || []).filter(m => !m.url?.includes('.pdf'));
-                const photos = media.filter(m => m.media_type === 'photo');
-                const videos = media.filter(m => m.media_type === 'video');
-                const primaryPhoto = photos.find(m => m.is_primary) || photos[0];
-                return (
-                  <div key={animal.id} className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm">
-                    {/* Photo gallery */}
-                    {photos.length > 1 ? (
-                      <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
-                        {photos.map((m, i) => (
-                          <div key={m.id} className="flex-none w-full aspect-[4/3] snap-center relative">
-                            <img src={m.url} alt={`${animal.name} ${i + 1}`} className="w-full h-full object-cover" />
-                            {i === 0 && (
-                              <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                                Found their home
-                              </div>
-                            )}
-                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                              {photos.map((_, j) => (
-                                <div key={j} className={`w-1.5 h-1.5 rounded-full ${j === i ? 'bg-white' : 'bg-white/40'}`} />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : primaryPhoto ? (
-                      <div className="aspect-[4/3] relative">
-                        <img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />
-                        <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
-                          Found their home
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="aspect-[4/3] bg-cream-200 flex items-center justify-center">
-                        <Camera className="w-10 h-10 text-cream-300" />
-                      </div>
-                    )}
-                    {/* Video player if available */}
-                    {videos.length > 0 && (
-                      <div className="px-4 pt-2">
-                        {videos.map(v => (
-                          <video key={v.id} controls playsInline preload="metadata" className="w-full rounded-lg" style={{ maxHeight: '200px' }}>
-                            <source src={v.url} />
-                          </video>
-                        ))}
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <p className="font-display font-semibold text-charcoal-600">{animal.name}</p>
-                      <p className="text-xs text-charcoal-300 mt-0.5">{animal.sex}{animal.description ? ` · ${animal.description.substring(0, 60)}${animal.description.length > 60 ? '...' : ''}` : ''}</p>
-                    </div>
-                  </div>
-                );
-              })}
+              {sold.map((animal) => (
+                <SoldAnimalCard key={animal.id} animal={animal} />
+              ))}
             </div>
           </section>
         )}
@@ -204,5 +153,107 @@ export default function AvailablePage({ breed }) {
         </section>
       </div>
     </>
+  );
+}
+
+function SoldAnimalCard({ animal }) {
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState(0);
+
+  const allMedia = (animal.animal_media || []).filter(m => !m.url?.includes('.pdf'));
+  const photos = allMedia.filter(m => m.media_type === 'photo');
+  const videos = allMedia.filter(m => m.media_type === 'video');
+  const primaryPhoto = photos.find(m => m.is_primary) || photos[0];
+  // All viewable items: photos first, then videos
+  const gallery = [...photos, ...videos];
+
+  const openLightbox = (idx) => { setLightboxIdx(idx); setLightboxOpen(true); };
+  const closeLightbox = () => setLightboxOpen(false);
+  const next = () => setLightboxIdx(i => (i + 1) % gallery.length);
+  const prev = () => setLightboxIdx(i => (i - 1 + gallery.length) % gallery.length);
+
+  return (
+    <div className="bg-white rounded-xl overflow-hidden border border-cream-200 shadow-sm">
+      {/* Main image */}
+      {primaryPhoto ? (
+        <div className="aspect-[4/3] relative cursor-pointer" onClick={() => openLightbox(photos.indexOf(primaryPhoto))}>
+          <img src={primaryPhoto.url} alt={animal.name} className="w-full h-full object-cover" />
+          <div className="absolute top-2 right-2 bg-charcoal-700/80 text-cream-100 text-[9px] font-bold px-2 py-0.5 rounded-full">
+            Found their home
+          </div>
+          {gallery.length > 1 && (
+            <div className="absolute bottom-2 left-2 bg-charcoal-700/70 text-white text-[10px] px-2 py-0.5 rounded-full">
+              {photos.length} photo{photos.length !== 1 ? 's' : ''}{videos.length > 0 ? ` · ${videos.length} video` : ''}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="aspect-[4/3] bg-cream-200 flex items-center justify-center">
+          <Camera className="w-10 h-10 text-cream-300" />
+        </div>
+      )}
+
+      {/* Thumbnails */}
+      {gallery.length > 1 && (
+        <div className="flex gap-1.5 px-3 py-2 overflow-x-auto scrollbar-hide">
+          {gallery.map((m, i) => (
+            <button key={m.id} onClick={() => openLightbox(i)}
+              className={`flex-none w-14 h-14 rounded-lg overflow-hidden border-2 transition-all ${
+                m.id === primaryPhoto?.id ? 'border-sage-500' : 'border-cream-200 hover:border-cream-400'
+              }`}>
+              {m.media_type === 'video' ? (
+                <div className="w-full h-full bg-charcoal-700 flex items-center justify-center">
+                  <Play className="w-4 h-4 text-white/80" />
+                </div>
+              ) : (
+                <img src={m.url} alt="" className="w-full h-full object-cover" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="px-4 pb-4 pt-1">
+        <p className="font-display font-semibold text-charcoal-600">{animal.name}</p>
+        <p className="text-xs text-charcoal-300 mt-0.5">{animal.sex}{animal.description ? ` · ${animal.description.substring(0, 60)}${animal.description.length > 60 ? '...' : ''}` : ''}</p>
+      </div>
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={closeLightbox}>
+          <button className="absolute top-4 right-4 text-white/80 hover:text-white z-50 p-2" onClick={closeLightbox}>
+            <X className="w-7 h-7" />
+          </button>
+
+          {gallery.length > 1 && (
+            <>
+              <button className="absolute left-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-50"
+                onClick={(e) => { e.stopPropagation(); prev(); }}>
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button className="absolute right-2 top-1/2 -translate-y-1/2 text-white/60 hover:text-white p-2 z-50"
+                onClick={(e) => { e.stopPropagation(); next(); }}>
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            </>
+          )}
+
+          <div className="max-w-3xl max-h-[85vh] w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            {gallery[lightboxIdx]?.media_type === 'video' ? (
+              <video controls autoPlay playsInline className="w-full max-h-[80vh] rounded-lg">
+                <source src={gallery[lightboxIdx].url} />
+              </video>
+            ) : (
+              <img src={gallery[lightboxIdx]?.url} alt={animal.name}
+                className="w-full max-h-[80vh] object-contain rounded-lg" />
+            )}
+            <div className="text-center mt-3 text-white/60 text-sm">
+              {lightboxIdx + 1} / {gallery.length}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
