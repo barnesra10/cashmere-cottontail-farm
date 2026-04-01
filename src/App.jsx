@@ -11,6 +11,7 @@ import QuickPost from './pages/QuickPost';
 import SocialPreview from './pages/SocialPreview';
 import SocialPost from './pages/SocialPost';
 import BillOfSale from './pages/BillOfSale';
+import BuyerBillOfSale from './pages/BuyerBillOfSale';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="social" element={<SocialPreview />} />
           <Route path="social-post" element={<SocialPost />} />
           <Route path="bill-of-sale" element={<BillOfSale />} />
+          <Route path="buyer/:token" element={<BuyerBillOfSale />} />
           <Route path=":breedSlug" element={<BreedPageWrapper />} />
           <Route path=":breedSlug/available" element={<AvailablePageWrapper />} />
           <Route path="*" element={<NotFound />} />
