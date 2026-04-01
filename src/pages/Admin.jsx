@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession, registerDevice, checkDeviceAuth, getDeviceToken, removeDeviceToken } from '../lib/adminAuth';
-import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, Smartphone } from 'lucide-react';
+import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, Smartphone, Link2 } from 'lucide-react';
 import SEO from '../components/SEO';
 
 function LoginScreen({ onLogin }) {
@@ -450,10 +450,28 @@ export default function Admin() {
                         </button>
                         {animal.role !== 'sold' && (
                           <>
+                            <button onClick={async () => {
+                              const res = await fetch('https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/buyer-bill-of-sale/create', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'x-admin-key': 'ccf2025admin' },
+                                body: JSON.stringify({ animal_id: animal.id })
+                              });
+                              const data = await res.json();
+                              if (data.url) {
+                                if (navigator.share) {
+                                  navigator.share({ title: `Bill of Sale - ${animal.name}`, text: `Please complete the bill of sale for ${animal.name}:`, url: data.url });
+                                } else {
+                                  navigator.clipboard.writeText(data.url);
+                                  alert('Buyer link copied!\n\n' + data.url);
+                                }
+                              } else { alert('Error generating link'); }
+                            }} className="p-2 text-charcoal-300 hover:text-purple-500" title="Send buyer link">
+                              <Link2 className="w-4 h-4" />
+                            </button>
                             <button onClick={() => {
                               sessionStorage.setItem('ccf_bill_of_sale_animal', JSON.stringify(animal));
                               window.location.href = '/bill-of-sale';
-                            }} className="p-2 text-charcoal-300 hover:text-amber-600" title="Bill of Sale">
+                            }} className="p-2 text-charcoal-300 hover:text-amber-600" title="Bill of Sale (in-person)">
                               <FileText className="w-4 h-4" />
                             </button>
                             <button onClick={async () => {
