@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown, MessageCircle, MessageSquare, Settings, Camera, FileText, Share2 } from 'lucide-react';
+import { Menu, X, ChevronDown, MessageCircle, MessageSquare, Settings, Camera, FileText, Share2, ClipboardList } from 'lucide-react';
 import ChatWidget from './ChatWidget';
 import { useBreeds } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
@@ -170,6 +170,14 @@ export default function Layout() {
                     <div>
                       <span className="block text-sm font-medium">Social Media</span>
                       <span className="block text-[10px] text-charcoal-300">Create & schedule social posts</span>
+                    </div>
+                  </NavLink>
+                  <NavLink to="/records" onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) => `flex items-center gap-3 py-2.5 ${isActive ? 'text-sage-500 font-semibold' : 'text-charcoal-500'}`}>
+                    <ClipboardList className="w-4 h-4" />
+                    <div>
+                      <span className="block text-sm font-medium">Animal Records</span>
+                      <span className="block text-[10px] text-charcoal-300">Health, vaccinations, breeding logs</span>
                     </div>
                   </NavLink>
                 </div>
