@@ -385,17 +385,15 @@ function AddRecordModal({ animals, breeds, preSelectedAnimal, onClose, onSave })
           <textarea placeholder="Notes (optional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
             className="w-full px-3 py-2.5 bg-cream-50 border border-cream-200 rounded-xl text-sm" rows={2} />
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-charcoal-400 block mb-1">Date</label>
-              <input type="date" value={form.record_date} onChange={e => setForm(f => ({ ...f, record_date: e.target.value }))}
-                className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
-            </div>
-            <div>
-              <label className="text-[10px] text-charcoal-400 block mb-1">Next Due (optional)</label>
-              <input type="date" value={form.next_due_date} onChange={e => setForm(f => ({ ...f, next_due_date: e.target.value }))}
-                className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
-            </div>
+          <div>
+            <label className="text-[10px] text-charcoal-400 block mb-1">Date</label>
+            <input type="date" value={form.record_date} onChange={e => setForm(f => ({ ...f, record_date: e.target.value }))}
+              className="w-full px-3 py-2.5 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
+          </div>
+          <div>
+            <label className="text-[10px] text-charcoal-400 block mb-1">Next Due Date (optional — for recurring treatments)</label>
+            <input type="date" value={form.next_due_date} onChange={e => setForm(f => ({ ...f, next_due_date: e.target.value }))}
+              className="w-full px-3 py-2.5 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
           </div>
 
           {/* Document upload */}
