@@ -13,6 +13,7 @@ import SocialPost from './pages/SocialPost';
 import BillOfSale from './pages/BillOfSale';
 import BuyerBillOfSale from './pages/BuyerBillOfSale';
 import Records from './pages/Records';
+import PublicAnimalRecord from './pages/PublicAnimalRecord';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="social-post" element={<SocialPost />} />
           <Route path="bill-of-sale" element={<BillOfSale />} />
           <Route path="records" element={<Records />} />
+          <Route path="animal-record/:token" element={<PublicAnimalRecord />} />
           <Route path="buyer/:token" element={<BuyerBillOfSale />} />
           <Route path=":breedSlug" element={<BreedPageWrapper />} />
           <Route path=":breedSlug/available" element={<AvailablePageWrapper />} />

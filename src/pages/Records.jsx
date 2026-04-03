@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getSavedSession, checkDeviceAuth, getDeviceToken } from '../lib/adminAuth';
 import { setAdminKey } from '../lib/adminApi';
-import { Lock, Plus, Search, FileText, Syringe, Scissors, Heart, Calendar, Upload, Trash2, ChevronDown, Check, Printer, ClipboardList } from 'lucide-react';
+import { Lock, Plus, Search, FileText, Syringe, Scissors, Heart, Calendar, Upload, Trash2, ChevronDown, Check, Printer, ClipboardList, Share2, Download, Link2, X } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const API = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/admin-api';
+const PUBLIC_API = 'https://szzofkefbrqvsfkwojdj.supabase.co/functions/v1/animal-records-public';
 const adminKey = () => sessionStorage.getItem('ccf_admin_key') || '';
 const headers = () => ({ 'Content-Type': 'application/json', 'x-admin-key': adminKey() });
 
@@ -17,7 +18,7 @@ const RECORD_TYPES = [
   { value: 'document', label: 'Document', icon: '📄', color: 'bg-purple-100 text-purple-700' },
 ];
 
-const COMMON_RECORDS = [
+const DEFAULT_PRESETS = [
   { title: 'CDT Vaccination', type: 'vaccination' },
   { title: 'Rabies Vaccination', type: 'vaccination' },
   { title: 'Copper Bolus', type: 'care' },
@@ -27,6 +28,11 @@ const COMMON_RECORDS = [
   { title: 'Vet Check-up', type: 'medical' },
   { title: 'Weight Check', type: 'care' },
 ];
+
+function loadCustomPresets() {
+  try { return JSON.parse(localStorage.getItem('ccf_custom_presets') || '[]'); } catch { return []; }
+}
+function saveCustomPresets(presets) { localStorage.setItem('ccf_custom_presets', JSON.stringify(presets)); }
 
 const GESTATION = { sheep: 147, goat: 150, rabbit: 31, dog: 63, chicken: 21 };
 
@@ -94,6 +100,93 @@ export default function Records() {
 
   const expectingBreedings = breedingRecords.filter(b => b.status === 'expecting');
 
+  // Generate PDF for an animal's records
+  const generatePdf = async (animalId) => {
+    const animal = animals.find(a => a.id === animalId);
+    if (!animal) return;
+    const animalRecords = records.filter(r => r.animal_id === animalId);
+    const breed = breeds.find(b => b.id === animal.breed_id);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const doc = new jsPDF('p', 'mm', 'letter');
+      const w = doc.internal.pageSize.getWidth();
+      let y = 18;
+      const lm = 20, rm = w - 20, cw = rm - lm;
+
+      // Header
+      doc.setFont('times', 'bold'); doc.setFontSize(18);
+      doc.text('ANIMAL RECORD', w / 2, y, { align: 'center' }); y += 6;
+      doc.setFont('times', 'normal'); doc.setFontSize(10);
+      doc.text('Cashmere Cottontail Farm, LLC', w / 2, y, { align: 'center' }); y += 4;
+      doc.setDrawColor(30, 28, 24); doc.setLineWidth(0.5); doc.line(lm, y, rm, y); y += 8;
+
+      // Animal info
+      doc.setFillColor(240, 238, 233); doc.rect(lm, y - 4, cw, 7, 'F');
+      doc.setFont('times', 'bold'); doc.setFontSize(10);
+      doc.text('ANIMAL INFORMATION', lm + 2, y); y += 7;
+      doc.setFont('times', 'normal'); doc.setFontSize(9);
+      const info = [
+        ['Name:', animal.name], ['Breed:', breed?.name || 'N/A'], ['Sex:', animal.sex],
+        ['DOB:', animal.date_of_birth || 'N/A'], ['Registration:', animal.registration || 'N/A'],
+        ['Sire:', animal.sire_name || 'N/A'], ['Dam:', animal.dam_name || 'N/A'],
+      ];
+      info.forEach(([l, v]) => { doc.setFont('times', 'bold'); doc.text(l, lm + 2, y); doc.setFont('times', 'normal'); doc.text(v, lm + 30, y); y += 4.5; });
+      y += 4;
+
+      // Records
+      doc.setFillColor(240, 238, 233); doc.rect(lm, y - 4, cw, 7, 'F');
+      doc.setFont('times', 'bold'); doc.setFontSize(10);
+      doc.text(`RECORDS (${animalRecords.length})`, lm + 2, y); y += 7;
+
+      if (animalRecords.length === 0) {
+        doc.setFont('times', 'italic'); doc.setFontSize(9);
+        doc.text('No records on file.', lm + 2, y); y += 6;
+      } else {
+        // Table header
+        doc.setFont('times', 'bold'); doc.setFontSize(8);
+        doc.text('Date', lm + 2, y); doc.text('Type', lm + 28, y); doc.text('Title', lm + 55, y); doc.text('Notes', lm + 105, y);
+        y += 2; doc.setLineWidth(0.2); doc.line(lm, y, rm, y); y += 4;
+        doc.setFont('times', 'normal');
+        animalRecords.forEach(r => {
+          if (y > 260) { doc.addPage(); y = 20; }
+          doc.text(new Date(r.record_date).toLocaleDateString(), lm + 2, y);
+          doc.text(r.record_type, lm + 28, y);
+          doc.text((r.title || '').substring(0, 30), lm + 55, y);
+          doc.text((r.description || '').substring(0, 25), lm + 105, y);
+          y += 4.5;
+        });
+      }
+      y += 6;
+
+      // Footer
+      doc.setLineWidth(0.1); doc.line(lm, y, rm, y); y += 4;
+      doc.setFontSize(7);
+      doc.text(`Generated ${new Date().toLocaleDateString()} \u00b7 Cashmere Cottontail Farm, LLC \u00b7 (479) 531-0849 \u00b7 cashmerecottontailfarm.com`, w / 2, y, { align: 'center' });
+
+      doc.save(`${animal.name.replace(/\s+/g, '_')}_Records.pdf`);
+    } catch (e) { console.error('PDF error:', e); alert('PDF generation failed'); }
+  };
+
+  // Share an animal's record as a public link
+  const shareRecord = async (animalId) => {
+    const animal = animals.find(a => a.id === animalId);
+    try {
+      const res = await fetch(`${PUBLIC_API}/create-link`, {
+        method: 'POST', headers: headers(),
+        body: JSON.stringify({ animal_id: animalId })
+      });
+      const data = await res.json();
+      if (data.url) {
+        if (navigator.share) {
+          navigator.share({ title: `${animal?.name} - Animal Records`, text: `View ${animal?.name}'s health and care records:`, url: data.url });
+        } else {
+          navigator.clipboard.writeText(data.url);
+          alert('Link copied!\n\n' + data.url);
+        }
+      }
+    } catch (e) { alert('Error creating share link'); }
+  };
+
   if (checking) return null;
   if (!authed) return (
     <div className="max-w-sm mx-auto px-4 py-24 text-center">
@@ -150,6 +243,20 @@ export default function Records() {
                 {breeds.map(b => <option key={b.id} value={b.id}>{b.short_name}</option>)}
               </select>
             </div>
+
+            {/* Per-animal actions when filtered */}
+            {filterAnimal && (
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => generatePdf(filterAnimal)}
+                  className="flex items-center gap-1.5 text-xs bg-charcoal-700 text-white px-3 py-1.5 rounded-full font-medium">
+                  <Download className="w-3.5 h-3.5" /> Download PDF
+                </button>
+                <button onClick={() => shareRecord(filterAnimal)}
+                  className="flex items-center gap-1.5 text-xs bg-cream-100 text-charcoal-500 border border-cream-200 px-3 py-1.5 rounded-full font-medium">
+                  <Link2 className="w-3.5 h-3.5" /> Share Link
+                </button>
+              </div>
+            )}
 
             {/* Records list */}
             {filteredRecords.length === 0 ? (
@@ -314,6 +421,27 @@ function AddRecordModal({ animals, breeds, preSelectedAnimal, onClose, onSave })
   const [bulkBreed, setBulkBreed] = useState('');
   const [saving, setSaving] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
+  const [customPresets, setCustomPresets] = useState(loadCustomPresets());
+  const [showAddPreset, setShowAddPreset] = useState(false);
+  const [newPresetTitle, setNewPresetTitle] = useState('');
+  const [newPresetType, setNewPresetType] = useState('care');
+
+  const allPresets = [...DEFAULT_PRESETS, ...customPresets];
+
+  const addCustomPreset = () => {
+    if (!newPresetTitle.trim()) return;
+    const updated = [...customPresets, { title: newPresetTitle.trim(), type: newPresetType }];
+    setCustomPresets(updated);
+    saveCustomPresets(updated);
+    setForm(f => ({ ...f, title: newPresetTitle.trim(), record_type: newPresetType }));
+    setNewPresetTitle(''); setShowAddPreset(false);
+  };
+
+  const removePreset = (title) => {
+    const updated = customPresets.filter(p => p.title !== title);
+    setCustomPresets(updated);
+    saveCustomPresets(updated);
+  };
 
   const toggleAnimal = (id) => {
     setForm(f => ({
@@ -363,15 +491,33 @@ function AddRecordModal({ animals, breeds, preSelectedAnimal, onClose, onSave })
       <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl p-5" onClick={e => e.stopPropagation()}>
         <h2 className="font-display text-lg font-bold text-charcoal-600 mb-4">Add Record</h2>
 
-        {/* Quick presets */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {COMMON_RECORDS.map(cr => (
+        {/* Quick presets + custom */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {allPresets.map(cr => (
             <button key={cr.title} onClick={() => setForm(f => ({ ...f, title: cr.title, record_type: cr.type }))}
               className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors ${form.title === cr.title ? 'bg-sage-500 text-white border-sage-500' : 'bg-cream-50 text-charcoal-500 border-cream-200'}`}>
               {cr.title}
             </button>
           ))}
+          <button onClick={() => setShowAddPreset(!showAddPreset)}
+            className="text-[10px] px-2.5 py-1 rounded-full border border-dashed border-charcoal-300 text-charcoal-400">
+            + Custom
+          </button>
         </div>
+
+        {showAddPreset && (
+          <div className="flex gap-2 mb-3">
+            <input placeholder="New preset name" value={newPresetTitle} onChange={e => setNewPresetTitle(e.target.value)}
+              className="flex-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-xs" />
+            <select value={newPresetType} onChange={e => setNewPresetType(e.target.value)}
+              className="px-2 py-2 bg-cream-50 border border-cream-200 rounded-lg text-xs">
+              {RECORD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+            <button onClick={addCustomPreset} className="px-3 py-2 bg-sage-500 text-white rounded-lg text-xs font-bold">Add</button>
+          </div>
+        )}
+
+        <p className="text-[10px] text-charcoal-300 mb-3">Tap a preset or type your own title below</p>
 
         <div className="space-y-3">
           <select value={form.record_type} onChange={e => setForm(f => ({ ...f, record_type: e.target.value }))}
