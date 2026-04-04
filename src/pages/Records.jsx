@@ -689,32 +689,28 @@ function AlertsConfig() {
   const [newMs, setNewMs] = useState({ species: 'goat', days_before: 7, title: '', message: '' });
   const [testResult, setTestResult] = useState(null);
 
-  const SUPABASE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co';
-  const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6em9ma2VmYnJxdnNma3dvamRqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDcxNTA2MywiZXhwIjoyMDkwMjkxMDYzfQ.qTl8fozLexuu30ZLr20DXQBqLlgOmihb4oI1tVCIuDk';
-  const sbHeaders = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
-
   useEffect(() => { loadMilestones(); }, []);
 
   const loadMilestones = async () => {
-    const data = await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?select=*&order=species,days_before.desc`, { headers: sbHeaders }).then(r => r.json());
+    const data = await fetch(`${API}/milestones`, { headers: headers() }).then(r => r.json());
     if (Array.isArray(data)) setMilestones(data);
     setLoading(false);
   };
 
   const toggleMilestone = async (id, enabled) => {
-    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?id=eq.${id}`, { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ enabled: !enabled }) });
+    await fetch(`${API}/milestones/${id}`, { method: 'PUT', headers: headers(), body: JSON.stringify({ enabled: !enabled }) });
     loadMilestones();
   };
 
   const deleteMilestone = async (id) => {
     if (!confirm('Delete this milestone?')) return;
-    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?id=eq.${id}`, { method: 'DELETE', headers: sbHeaders });
+    await fetch(`${API}/milestones/${id}`, { method: 'DELETE', headers: headers() });
     loadMilestones();
   };
 
   const addMilestone = async () => {
     if (!newMs.title || !newMs.message) { alert('Title and message required'); return; }
-    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones`, { method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ ...newMs, enabled: true }) });
+    await fetch(`${API}/milestones`, { method: 'POST', headers: headers(), body: JSON.stringify({ ...newMs, enabled: true }) });
     setNewMs({ species: 'goat', days_before: 7, title: '', message: '' });
     setShowAdd(false);
     loadMilestones();
