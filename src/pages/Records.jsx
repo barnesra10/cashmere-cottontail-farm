@@ -213,10 +213,10 @@ export default function Records() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-4">
-          {[['records', 'Health & Care'], ['breeding', 'Breeding']].map(([key, label]) => (
+        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+          {[['records', 'Health & Care'], ['breeding', 'Breeding'], ['alerts', 'Alerts']].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${tab === key ? 'bg-sage-500 text-white' : 'bg-cream-100 text-charcoal-400'}`}>
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors whitespace-nowrap ${tab === key ? 'bg-sage-500 text-white' : 'bg-cream-100 text-charcoal-400'}`}>
               {label}
             </button>
           ))}
@@ -395,6 +395,11 @@ export default function Records() {
               </div>
             )}
           </>
+        )}
+
+        {/* ALERTS TAB */}
+        {tab === 'alerts' && (
+          <AlertsConfig />
         )}
 
         {/* ADD RECORD MODAL */}
@@ -672,6 +677,128 @@ function AddBreedingModal({ animals, breeds, onClose, onSave }) {
             {saving ? 'Saving...' : 'Log Breeding'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AlertsConfig() {
+  const [milestones, setMilestones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newMs, setNewMs] = useState({ species: 'goat', days_before: 7, title: '', message: '' });
+  const [testResult, setTestResult] = useState(null);
+
+  const SUPABASE_URL = 'https://szzofkefbrqvsfkwojdj.supabase.co';
+  const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6em9ma2VmYnJxdnNma3dvamRqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDcxNTA2MywiZXhwIjoyMDkwMjkxMDYzfQ.qTl8fozLexuu30ZLr20DXQBqLlgOmihb4oI1tVCIuDk';
+  const sbHeaders = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
+
+  useEffect(() => { loadMilestones(); }, []);
+
+  const loadMilestones = async () => {
+    const data = await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?select=*&order=species,days_before.desc`, { headers: sbHeaders }).then(r => r.json());
+    if (Array.isArray(data)) setMilestones(data);
+    setLoading(false);
+  };
+
+  const toggleMilestone = async (id, enabled) => {
+    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?id=eq.${id}`, { method: 'PATCH', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ enabled: !enabled }) });
+    loadMilestones();
+  };
+
+  const deleteMilestone = async (id) => {
+    if (!confirm('Delete this milestone?')) return;
+    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones?id=eq.${id}`, { method: 'DELETE', headers: sbHeaders });
+    loadMilestones();
+  };
+
+  const addMilestone = async () => {
+    if (!newMs.title || !newMs.message) { alert('Title and message required'); return; }
+    await fetch(`${SUPABASE_URL}/rest/v1/breeding_milestones`, { method: 'POST', headers: { ...sbHeaders, 'Prefer': 'return=minimal' }, body: JSON.stringify({ ...newMs, enabled: true }) });
+    setNewMs({ species: 'goat', days_before: 7, title: '', message: '' });
+    setShowAdd(false);
+    loadMilestones();
+  };
+
+  const testAlerts = async () => {
+    setTestResult('Checking...');
+    try {
+      const res = await fetch('https://ccf-breeding-alerts.ccf-farm.workers.dev/check');
+      const data = await res.json();
+      setTestResult(data.alerts?.length > 0 ? `Sent ${data.alerts.length} alert(s)!` : (data.message || 'No alerts triggered today'));
+    } catch { setTestResult('Error checking alerts'); }
+  };
+
+  const groupedBySpecies = {};
+  milestones.forEach(m => { if (!groupedBySpecies[m.species]) groupedBySpecies[m.species] = []; groupedBySpecies[m.species].push(m); });
+  const speciesEmoji = { rabbit: '🐰', goat: '🐐', sheep: '🐑', dog: '🐕', chicken: '🐔' };
+
+  if (loading) return <div className="flex justify-center py-8"><div className="w-6 h-6 border-3 border-sage-200 border-t-sage-500 rounded-full animate-spin" /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl border border-cream-200 p-4">
+        <h3 className="font-semibold text-sm text-charcoal-600 mb-1">Breeding Milestone Alerts</h3>
+        <p className="text-xs text-charcoal-300 mb-3">You and Raegon get a text when these milestones are hit. Checked daily at 7am CT.</p>
+        <div className="flex gap-2">
+          <button onClick={() => setShowAdd(true)} className="text-xs bg-sage-500 text-white px-3 py-1.5 rounded-full font-semibold flex items-center gap-1"><Plus className="w-3 h-3" /> Add Milestone</button>
+          <button onClick={testAlerts} className="text-xs bg-cream-100 text-charcoal-500 px-3 py-1.5 rounded-full font-medium border border-cream-200">🔔 Test Alerts Now</button>
+        </div>
+        {testResult && <p className="text-xs text-sage-500 mt-2">{testResult}</p>}
+      </div>
+
+      {showAdd && (
+        <div className="bg-white rounded-xl border border-sage-300 p-4 space-y-3">
+          <h4 className="font-semibold text-sm text-charcoal-600">New Milestone</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <select value={newMs.species} onChange={e => setNewMs(f => ({ ...f, species: e.target.value }))} className="px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm">
+              {Object.entries(speciesEmoji).map(([k, v]) => <option key={k} value={k}>{v} {k.charAt(0).toUpperCase() + k.slice(1)}</option>)}
+            </select>
+            <div className="flex items-center gap-2">
+              <input type="number" value={newMs.days_before} onChange={e => setNewMs(f => ({ ...f, days_before: parseInt(e.target.value) || 0 }))} className="w-16 px-2 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm text-center" />
+              <span className="text-xs text-charcoal-400">days before due</span>
+            </div>
+          </div>
+          <input placeholder="Title (e.g. 'Move to kindling box')" value={newMs.title} onChange={e => setNewMs(f => ({ ...f, title: e.target.value }))} className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
+          <textarea placeholder="Text message (use {dam}, {sire}, {days}, {due_date})" value={newMs.message} onChange={e => setNewMs(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" rows={2} />
+          <p className="text-[10px] text-charcoal-300">Variables: {'{dam}'} = mother, {'{sire}'} = father, {'{days}'} = days left, {'{due_date}'} = due date. Keep under 160 chars for SMS.</p>
+          <div className="flex gap-2">
+            <button onClick={() => setShowAdd(false)} className="flex-1 py-2 bg-cream-100 text-charcoal-500 rounded-full text-xs">Cancel</button>
+            <button onClick={addMilestone} className="flex-1 py-2 bg-sage-500 text-white rounded-full text-xs font-bold">Save Milestone</button>
+          </div>
+        </div>
+      )}
+
+      {Object.entries(groupedBySpecies).map(([species, items]) => (
+        <div key={species} className="bg-white rounded-xl border border-cream-200 overflow-hidden">
+          <div className="bg-cream-50 px-4 py-2 border-b border-cream-200 flex items-center gap-2">
+            <span className="text-base">{speciesEmoji[species]}</span>
+            <span className="font-semibold text-sm text-charcoal-600 capitalize">{species}</span>
+            <span className="text-[10px] text-charcoal-300">{GESTATION[species]}d gestation</span>
+          </div>
+          <div className="divide-y divide-cream-100">
+            {items.sort((a, b) => b.days_before - a.days_before).map(m => (
+              <div key={m.id} className={`px-4 py-3 flex items-start gap-3 ${!m.enabled ? 'opacity-40' : ''}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-charcoal-600">{m.days_before === 0 ? 'Due day' : `${m.days_before}d before`}</span>
+                    <span className="text-xs text-charcoal-500">{m.title}</span>
+                  </div>
+                  <p className="text-[10px] text-charcoal-300 mt-0.5 line-clamp-2">{m.message}</p>
+                </div>
+                <button onClick={() => toggleMilestone(m.id, m.enabled)} className={`text-[10px] px-2 py-1 rounded-full font-semibold ${m.enabled ? 'bg-green-100 text-green-700' : 'bg-cream-100 text-charcoal-400'}`}>
+                  {m.enabled ? 'ON' : 'OFF'}
+                </button>
+                <button onClick={() => deleteMilestone(m.id)} className="text-charcoal-200 hover:text-red-400 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="bg-cream-50 rounded-xl p-4 border border-cream-200">
+        <p className="text-xs text-charcoal-400"><strong>How it works:</strong> Every day at 7am CT, the system checks all active breeding records. When the days remaining matches a milestone, you and Raegon both get a text.</p>
+        <p className="text-xs text-charcoal-300 mt-2">Texts go to: Raegon (479) 531-0849 · Scott (479) 426-4944</p>
       </div>
     </div>
   );
