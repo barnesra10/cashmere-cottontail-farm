@@ -16,23 +16,15 @@ export default function AdminPanel({ isOpen, onClose }) {
   // Lock body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${window.scrollY}px`;
     } else {
-      const scrollY = document.body.style.top;
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
     return () => {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
     };
   }, [isOpen]);
 
@@ -67,12 +59,12 @@ export default function AdminPanel({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50" style={{ touchAction: 'none' }}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-[#2c2826]/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Panel — slides down from top */}
-      <div className="relative bg-[#faf8f5] min-h-screen overflow-y-auto animate-slideDown">
+      {/* Panel — fixed full screen with its own scroll */}
+      <div className="absolute inset-0 bg-[#faf8f5] overflow-y-auto overscroll-contain animate-slideDown" style={{ WebkitOverflowScrolling: 'touch' }}>
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[#2c2826] text-white px-5 pt-safe">
           <div className="flex items-center justify-between h-16">
@@ -107,7 +99,7 @@ export default function AdminPanel({ isOpen, onClose }) {
         </div>
 
         {/* Sections */}
-        <div className="px-4 py-5 pb-24 space-y-3">
+        <div className="px-4 py-5 pb-40 space-y-3">
 
           {/* PORTFOLIO section — like Podium */}
           <SectionHeader label="PORTFOLIO" />
