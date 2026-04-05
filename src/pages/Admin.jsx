@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, postToSocial } from '../lib/adminApi';
+import { setAdminKey, clearAdminKey, getAdminKey, getBreeds, getAnimals, createAnimal, updateAnimal, deleteAnimal, markAsSold, uploadMedia, deleteMedia, setPrimaryMedia, getContacts, markContactRead, markContactUnread, deleteContact, postToSocial } from '../lib/adminApi';
 import { getSavedSession, saveSession, clearSession, registerDevice, checkDeviceAuth, getDeviceToken, removeDeviceToken } from '../lib/adminAuth';
 import { Lock, Plus, Camera, Video, Trash2, Save, LogOut, Image, Eye, Play, Share2, Copy, CheckCircle, FileText, Smartphone, Link2 } from 'lucide-react';
 import SEO from '../components/SEO';
@@ -541,25 +541,134 @@ export default function Admin() {
         )}
 
         {tab === 'contacts' && (
-          <div className="space-y-3">
-            {contacts.map(c => (
-              <div key={c.id} className={`bg-white rounded-xl border p-4 ${c.read ? 'border-cream-200' : 'border-sage-300 bg-sage-50/30'}`}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-charcoal-600 text-sm">{c.name}</p>
-                    <p className="text-xs text-charcoal-300">{c.email} {c.phone && `· ${c.phone}`}</p>
-                    {c.interest && <span className="text-[10px] bg-cream-100 text-charcoal-400 px-2 py-0.5 rounded-full mt-1 inline-block">{c.interest}</span>}
-                  </div>
-                  <span className="text-[10px] text-charcoal-300">{new Date(c.created_at).toLocaleDateString()}</span>
-                </div>
-                <p className="text-sm text-charcoal-500 mt-2 leading-relaxed">{c.message}</p>
-                {!c.read && <button onClick={async () => { await markContactRead(c.id); loadData(); }} className="mt-2 text-xs text-sage-500 font-semibold">Mark as read</button>}
-              </div>
-            ))}
-            {contacts.length === 0 && <p className="text-center py-12 text-charcoal-300 font-body">No messages yet.</p>}
-          </div>
+          <MessagesPanel contacts={contacts} loadData={loadData} />
         )}
       </div>
     </>
+  );
+}
+
+function MessagesPanel({ contacts, loadData }) {
+  const [folder, setFolder] = useState('inbox');
+  const [replyTo, setReplyTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const inbox = contacts.filter(c => !c.read);
+  const read = contacts.filter(c => c.read);
+  const shown = folder === 'inbox' ? inbox : read;
+
+  const sendReply = async (contact) => {
+    if (!replyText.trim()) return;
+    setSending(true);
+    // Send via text message link (opens native SMS)
+    const body = encodeURIComponent(replyText);
+    if (contact.phone) {
+      window.open(`sms:${contact.phone}&body=${body}`, '_blank');
+    } else if (contact.email) {
+      window.open(`mailto:${contact.email}?subject=Re: Your inquiry - Cashmere Cottontail Farm&body=${body}`, '_blank');
+    }
+    // Mark as read after replying
+    await markContactRead(contact.id);
+    setReplyTo(null);
+    setReplyText('');
+    setSending(false);
+    loadData();
+  };
+
+  return (
+    <div>
+      {/* Folder tabs */}
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setFolder('inbox')}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${folder === 'inbox' ? 'bg-charcoal-700 text-white' : 'bg-cream-100 text-charcoal-400'}`}>
+          Inbox {inbox.length > 0 && <span className="ml-1 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{inbox.length}</span>}
+        </button>
+        <button onClick={() => setFolder('read')}
+          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${folder === 'read' ? 'bg-charcoal-700 text-white' : 'bg-cream-100 text-charcoal-400'}`}>
+          Read ({read.length})
+        </button>
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-charcoal-300 font-body">{folder === 'inbox' ? 'No new messages' : 'No read messages'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {shown.map(c => (
+            <div key={c.id} className={`bg-white rounded-xl border p-4 ${!c.read ? 'border-sage-300 bg-sage-50/30' : 'border-cream-200'}`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-charcoal-600 text-sm">{c.name}</p>
+                  <p className="text-xs text-charcoal-300">{c.email} {c.phone && `· ${c.phone}`}</p>
+                  {c.interest && <span className="text-[10px] bg-cream-100 text-charcoal-400 px-2 py-0.5 rounded-full mt-1 inline-block">{c.interest}</span>}
+                </div>
+                <span className="text-[10px] text-charcoal-300">{new Date(c.created_at).toLocaleDateString()}</span>
+              </div>
+              <p className="text-sm text-charcoal-500 mt-2 leading-relaxed">{c.message}</p>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-cream-100">
+                {/* Reply */}
+                <button onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
+                  className="text-xs text-sage-500 font-semibold hover:text-sage-700">
+                  {replyTo === c.id ? 'Cancel' : '↩ Reply'}
+                </button>
+
+                {/* Mark read/unread */}
+                {!c.read ? (
+                  <button onClick={async () => { await markContactRead(c.id); loadData(); }}
+                    className="text-xs text-charcoal-300 hover:text-charcoal-500">✓ Mark read</button>
+                ) : (
+                  <button onClick={async () => { await markContactUnread(c.id); loadData(); }}
+                    className="text-xs text-charcoal-300 hover:text-charcoal-500">Mark unread</button>
+                )}
+
+                {/* Quick contact buttons */}
+                {c.phone && (
+                  <a href={`sms:${c.phone}`} className="text-xs text-blue-500 font-medium">💬 Text</a>
+                )}
+                {c.email && (
+                  <a href={`mailto:${c.email}`} className="text-xs text-blue-500 font-medium">✉ Email</a>
+                )}
+
+                {/* Delete */}
+                <button onClick={async () => {
+                  if (confirm(`Delete message from ${c.name}?`)) { await deleteContact(c.id); loadData(); }
+                }} className="text-xs text-red-400 hover:text-red-600 ml-auto">Delete</button>
+              </div>
+
+              {/* Reply box */}
+              {replyTo === c.id && (
+                <div className="mt-3 space-y-2">
+                  <textarea value={replyText} onChange={e => setReplyText(e.target.value)}
+                    placeholder={`Reply to ${c.name}...`} rows={3}
+                    className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-sm" />
+                  <div className="flex gap-2">
+                    {c.phone && (
+                      <button onClick={() => sendReply(c)}
+                        className="flex-1 py-2 bg-sage-500 text-white rounded-full text-xs font-bold">
+                        Send via Text
+                      </button>
+                    )}
+                    {c.email && (
+                      <button onClick={() => {
+                        const body = encodeURIComponent(replyText);
+                        window.open(`mailto:${c.email}?subject=Re: Your inquiry - Cashmere Cottontail Farm&body=${body}`, '_blank');
+                        markContactRead(c.id); setReplyTo(null); setReplyText(''); loadData();
+                      }}
+                        className="flex-1 py-2 bg-charcoal-700 text-white rounded-full text-xs font-bold">
+                        Send via Email
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

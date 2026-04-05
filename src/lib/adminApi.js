@@ -47,6 +47,8 @@ export const setPrimaryMedia = (mediaId, animalId) => api('/media/primary', { me
 // Contacts
 export const getContacts = () => api('/contacts');
 export const markContactRead = (id) => api(`/contacts/${id}/read`, { method: 'PUT' });
+export const markContactUnread = (id) => api(`/contacts/${id}/unread`, { method: 'PUT' });
+export const deleteContact = (id) => api(`/contacts/${id}`, { method: 'DELETE' });
 
 // Litters
 export const getLitters = () => api('/litters');
