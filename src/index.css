@@ -80,3 +80,22 @@ body {
 /* Hide scrollbar for swipeable galleries */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Admin panel wipe-down animation */
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slideDown {
+  animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Gear icon spin */
+@keyframes gearSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(90deg); }
+}
+.gear-to-x { animation: gearSpin 0.3s ease forwards; }
+
+/* Safe area padding for notch phones */
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }

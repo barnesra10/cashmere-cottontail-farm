@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, NavLink, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown, MessageCircle, MessageSquare, Settings, Camera, FileText, Share2, ClipboardList } from 'lucide-react';
 import ChatWidget from './ChatWidget';
+import AdminPanel from './AdminPanel';
 import { useBreeds } from '../hooks/useData';
 import { supabase } from '../lib/supabase';
 import { getDeviceToken } from '../lib/adminAuth';
@@ -57,6 +58,8 @@ function NavDropdown({ label, items, mobile, onClose, highlight }) {
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const isTrusted = getDeviceToken();
   const [chatOpen, setChatOpen] = useState(false);
   const location = useLocation();
 
@@ -110,10 +113,18 @@ export default function Layout() {
               </NavLink>
             </nav>
 
-            {/* Mobile toggle */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-charcoal-500">
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            {/* Mobile toggle + admin gear */}
+            <div className="md:hidden flex items-center gap-1">
+              {isTrusted && (
+                <button onClick={() => { setAdminOpen(!adminOpen); setMobileOpen(false); }}
+                  className="p-2 text-charcoal-500 hover:text-charcoal-700 transition-colors">
+                  <Settings className={`w-6 h-6 transition-transform duration-300 ${adminOpen ? 'rotate-90' : ''}`} />
+                </button>
+              )}
+              <button onClick={() => { setMobileOpen(!mobileOpen); setAdminOpen(false); }} className="p-2 text-charcoal-500">
+                {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -253,6 +264,9 @@ export default function Layout() {
           </>
         )}
       </div>
+
+      {/* Admin Panel overlay */}
+      {isTrusted && <AdminPanel isOpen={adminOpen} onClose={() => setAdminOpen(false)} />}
     </div>
   );
 }
