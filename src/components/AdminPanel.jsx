@@ -68,7 +68,7 @@ export default function AdminPanel({ isOpen, onClose }) {
         {/* Header */}
         <div className="sticky top-0 z-10 bg-[#2c2826] text-white px-5 pt-safe">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => goTo('/')}>
               <img src="/logo.jpeg" alt="" className="h-9 w-auto rounded-md opacity-90" />
               <div>
                 <p className="font-display text-sm font-bold tracking-wide">CASHMERE COTTONTAIL</p>
