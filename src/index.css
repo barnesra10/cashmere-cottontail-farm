@@ -97,5 +97,10 @@ body {
 }
 .gear-to-x { animation: gearSpin 0.3s ease forwards; }
 
+/* Prevent iOS zoom on input focus */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
 /* Safe area padding for notch phones */
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }

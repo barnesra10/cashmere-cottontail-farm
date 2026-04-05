@@ -107,7 +107,7 @@ export default function AdminPanel({ isOpen, onClose }) {
         </div>
 
         {/* Sections */}
-        <div className="px-4 py-5 space-y-3">
+        <div className="px-4 py-5 pb-24 space-y-3">
 
           {/* PORTFOLIO section — like Podium */}
           <SectionHeader label="PORTFOLIO" />
