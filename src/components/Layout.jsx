@@ -231,9 +231,9 @@ export default function Layout() {
               <ul className="space-y-2 font-body text-sm text-cream-300">
                 <li><a href="sms:4795310849" className="hover:text-wheat-300 transition-colors">Text Us: (479) 531-0849</a></li>
                 <li><Link to="/contact" className="hover:text-wheat-300 transition-colors">Contact Form</Link></li>
-                <li><a href="https://facebook.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Facebook</a></li>
-                <li><a href="https://instagram.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Instagram</a></li>
-                <li><a href="https://tiktok.com" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">TikTok</a></li>
+                <li><a href="https://www.facebook.com/cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Facebook</a></li>
+                <li><a href="https://www.instagram.com/cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Instagram</a></li>
+                <li><a href="https://www.tiktok.com/@cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">TikTok</a></li>
               </ul>
             </div>
           </div>
