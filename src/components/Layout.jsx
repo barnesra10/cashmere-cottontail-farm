@@ -233,7 +233,6 @@ export default function Layout() {
                 <li><Link to="/contact" className="hover:text-wheat-300 transition-colors">Contact Form</Link></li>
                 <li><a href="https://www.facebook.com/cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Facebook</a></li>
                 <li><a href="https://www.instagram.com/cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Instagram</a></li>
-                <li><a href="https://www.tiktok.com/@cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">TikTok</a></li>
               </ul>
             </div>
           </div>
