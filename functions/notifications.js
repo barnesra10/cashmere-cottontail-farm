@@ -5,7 +5,7 @@ export async function onRequest(context) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Get Notified - Cashmere Cottontail Farm</title>
-  <meta name="description" content="Sign up for text alerts from Cashmere Cottontail Farm. Text FARM to get updates about new litters, available animals, and farm news.">
+  <meta name="description" content="Sign up for text alerts from Cashmere Cottontail Farm. Text CASHMERE to get updates about new litters, available animals, and farm news.">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Georgia, 'Times New Roman', serif; background: #faf8f5; color: #2c2826; min-height: 100vh; }
@@ -63,9 +63,9 @@ export async function onRequest(context) {
     <!-- Text-to-Join CTA -->
     <div class="cta-box">
       <div class="cta-label">Text the word</div>
-      <div class="cta-keyword">FARM</div>
-      <div class="cta-number">to (479) 888-8420</div>
-      <a href="sms:+14798888420&body=FARM" class="cta-btn">Tap to Text FARM Now</a>
+      <div class="cta-keyword">CASHMERE</div>
+      <div class="cta-number">to (833) 350-8275</div>
+      <a href="sms:+18333508275&body=CASHMERE" class="cta-btn">Tap to Text CASHMERE Now</a>
     </div>
 
     <div class="divider">
@@ -92,7 +92,7 @@ export async function onRequest(context) {
 
     <!-- Compliance -->
     <div class="compliance">
-      <p>By texting <strong>FARM</strong> to the number above, you consent to receive recurring automated marketing text messages from Cashmere Cottontail Farm at the number used to opt in. Approximately 2-4 messages per month. Message and data rates may apply. Consent is not a condition of purchase.</p>
+      <p>By texting <strong>CASHMERE</strong> to the number above, you consent to receive recurring automated marketing text messages from Cashmere Cottontail Farm at the number used to opt in. Approximately 2-4 messages per month. Message and data rates may apply. Consent is not a condition of purchase.</p>
       <p>Text <strong>STOP</strong> to unsubscribe at any time. Text <strong>HELP</strong> for help.</p>
       <p><a href="/privacy">Privacy Policy</a> &middot; <a href="/terms">Terms &amp; Conditions</a></p>
     </div>
