@@ -204,6 +204,18 @@ export default function Layout() {
       </main>
 
       {/* Footer */}
+      {/* Text Alerts Banner */}
+      <div className="bg-charcoal-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-cream-300/60 mb-2">Never miss a new litter</p>
+          <h3 className="font-display text-xl font-bold mb-3">Get Text Alerts</h3>
+          <p className="text-sm text-cream-300 mb-4">Text <span className="font-bold text-white tracking-wider">CASHMERE</span> to <span className="font-bold text-white">(833) 350-8275</span></p>
+          <a href="sms:+18333508275&body=CASHMERE" className="inline-block bg-sage-500 hover:bg-sage-600 text-white font-semibold px-6 py-3 rounded-full text-sm transition-colors">
+            Tap to Subscribe Now
+          </a>
+        </div>
+      </div>
+
       <footer className="bg-charcoal-700 text-cream-200 plaid-bg">
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -229,6 +241,7 @@ export default function Layout() {
             <div>
               <h4 className="font-display text-lg mb-4 text-cream-100">Connect</h4>
               <ul className="space-y-2 font-body text-sm text-cream-300">
+                <li><a href="sms:+18333508275&body=CASHMERE" className="hover:text-wheat-300 transition-colors">📱 Text Alerts: Text CASHMERE to (833) 350-8275</a></li>
                 <li><a href="sms:4795310849" className="hover:text-wheat-300 transition-colors">Text Us: (479) 531-0849</a></li>
                 <li><Link to="/contact" className="hover:text-wheat-300 transition-colors">Contact Form</Link></li>
                 <li><a href="https://www.facebook.com/cashmerecottontailfarm" target="_blank" rel="noopener" className="hover:text-wheat-300 transition-colors">Facebook</a></li>
