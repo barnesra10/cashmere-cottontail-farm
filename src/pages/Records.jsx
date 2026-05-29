@@ -757,7 +757,7 @@ function AlertsConfig() {
           </div>
           <input placeholder="Title (e.g. 'Move to kindling box')" value={newMs.title} onChange={e => setNewMs(f => ({ ...f, title: e.target.value }))} className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" />
           <textarea placeholder="Text message (use {dam}, {sire}, {days}, {due_date})" value={newMs.message} onChange={e => setNewMs(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-lg text-sm" rows={2} />
-          <p className="text-[10px] text-charcoal-300">Variables: {'{dam}'} = mother, {'{sire}'} = father, {'{days}'} = days left, {'{due_date}'} = due date. Keep under 160 chars for SMS.</p>
+          <p className="text-[10px] text-charcoal-300">Variables: {'{dam}'} = mother, {'{sire}'} = father, {'{days}'} = days left, {'{due_date}'} = due date.</p>
           <div className="flex gap-2">
             <button onClick={() => setShowAdd(false)} className="flex-1 py-2 bg-cream-100 text-charcoal-500 rounded-full text-xs">Cancel</button>
             <button onClick={addMilestone} className="flex-1 py-2 bg-sage-500 text-white rounded-full text-xs font-bold">Save Milestone</button>
@@ -793,8 +793,8 @@ function AlertsConfig() {
       ))}
 
       <div className="bg-cream-50 rounded-xl p-4 border border-cream-200">
-        <p className="text-xs text-charcoal-400"><strong>How it works:</strong> Every day at 7am CT, the system checks all active breeding records. When the days remaining matches a milestone, you and Raegon both get a text.</p>
-        <p className="text-xs text-charcoal-300 mt-2">Texts go to: Raegon (479) 531-0849 · Scott (479) 426-4944</p>
+        <p className="text-xs text-charcoal-400"><strong>How it works:</strong> Every day at 7am CT, the system checks all active breeding records. When the days remaining matches a milestone, you and Raegon both get an email.</p>
+        <p className="text-xs text-charcoal-300 mt-2">Emails go to: Raegon (raegon@cashmerecottontailfarm.com) · Scott (scott@podiumfinancial.com)</p>
       </div>
     </div>
   );

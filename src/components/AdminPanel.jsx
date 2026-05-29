@@ -111,7 +111,7 @@ export default function AdminPanel({ isOpen, onClose }) {
           <NavCard icon={ClipboardList} label="Animal Records" desc="Health, vaccinations, care logs" onClick={() => goTo('/records')}
             badge={stats.expecting > 0 ? `${stats.expecting} expecting` : null} />
           <NavCard icon={Heart} label="Breeding" desc="Breeding logs & due date countdowns" onClick={() => { goTo('/records'); /* will default to breeding tab */ }} />
-          <NavCard icon={Bell} label="Alerts" desc="Milestone SMS & email notifications" onClick={() => { goTo('/records'); }} />
+          <NavCard icon={Bell} label="Alerts" desc="Milestone email notifications" onClick={() => { goTo('/records'); }} />
 
           {/* SALES section */}
           <SectionHeader label="SALES" />
